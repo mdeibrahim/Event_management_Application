@@ -96,6 +96,10 @@ NPM_BIN_PATH = "C:\\Program Files\\nodejs\\npm.cmd"
 #     }
 # }
 
+
+# Custom User Model
+AUTH_USER_MODEL = 'tasks.User'
+
 DATABASES = {
    'default': {
        'ENGINE': 'django.db.backends.postgresql',
