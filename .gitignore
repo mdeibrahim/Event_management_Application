@@ -19,6 +19,19 @@ wheels/
 *.egg-info/
 .installed.cfg
 *.egg
+.pytest_cache/
+.coverage
+htmlcov/
+.tox/
+.nox/
+.hypothesis/
+.coverage.*
+coverage.xml
+*.cover
+*.py,cover
+.hypothesis/
+.pytest_cache/
+cover/
 
 # Django
 *.log
@@ -34,6 +47,26 @@ static/
 .Python
 *.manifest
 *.spec
+*.pot
+*.mo
+celerybeat-schedule
+celerybeat.pid
+*.sqlite3
+*.db
+*.sql
+*.sqlite3-journal
+*.psql
+*.postgresql
+*.postgres
+*.bak
+*.tmp
+*~
+*.swp
+*.swo
+.DS_Store
+*.sublime-workspace
+*.sublime-project
+*.code-workspace
 
 # Virtual Environment
 venv/
@@ -42,6 +75,8 @@ ENV/
 .env
 .venv
 event_management_env/
+pythonenv*/
+.python-version
 
 # IDE
 .idea/
@@ -52,6 +87,21 @@ event_management_env/
 *.sublime-workspace
 *.sublime-project
 *.code-workspace
+.project
+.pydevproject
+.settings/
+*.sublime-workspace
+*.sublime-project
+*.code-workspace
+*.tmproj
+*.esproj
+nbproject/
+_private/
+.atom/
+.buildlog/
+.history
+.svn/
+migrate_working_dir/
 
 # Node
 node_modules/
@@ -61,6 +111,10 @@ yarn-error.log*
 package-lock.json
 yarn.lock
 .pnpm-debug.log*
+.npm
+.eslintcache
+.node_repl_history
+.yarn-integrity
 
 # Coverage reports
 htmlcov/
@@ -103,6 +157,9 @@ celerybeat.pid
 .env.development
 .env.test
 .env.production
+.env.development.local
+.env.test.local
+.env.production.local
 
 # Tailwind
 theme/static/css/dist/
@@ -126,6 +183,10 @@ yarn-debug.log*
 yarn-error.log*
 pnpm-debug.log*
 lerna-debug.log*
+*.log.*
+log/
+tmp/
+temp/
 
 # Editor directories and files
 .idea
@@ -135,3 +196,19 @@ lerna-debug.log*
 *.njsproj
 *.sln
 *.sw?
+.vs/
+*.sublime-workspace
+*.sublime-project
+*.code-workspace
+.project
+.pydevproject
+.settings/
+*.tmproj
+*.esproj
+nbproject/
+_private/
+.atom/
+.buildlog/
+.history
+.svn/
+migrate_working_dir/

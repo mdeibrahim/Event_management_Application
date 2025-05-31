@@ -3,10 +3,13 @@ from django.contrib.auth.models import AbstractUser # Using AbstractUser for eas
 from django.conf import settings # To use AUTH_USER_MODEL
 import os
 import uuid
+from django.contrib.auth import get_user_model
 
 # Custom User Model (if you decide to extend the default User significantly later)
 # For now, we can use Django's built-in User and a separate Profile model.
 # If you use AbstractUser, ensure you set AUTH_USER_MODEL = 'your_app.User' in settings.py
+
+User = get_user_model()
 
 def user_profile_image_path(instance, filename):
     # Generate path: media/profiles/user_id/filename
@@ -14,35 +17,6 @@ def user_profile_image_path(instance, filename):
     filename = f"profile_{instance.user.id}.{ext}"
     return os.path.join('profiles', str(instance.user.id), filename)
 
-class User(AbstractUser):
-    ROLE_CHOICES = [
-        ('GENERAL_USER', 'General User'),
-    ]
-    
-    # Unique identifier for the user
-    user_id = models.UUIDField(default=uuid.uuid4, editable=False, unique=True)
-    
-    # Inherits username, first_name, last_name, email, password, etc.
-    primary_role = models.CharField(
-        max_length=20,
-        choices=ROLE_CHOICES,
-        default='GENERAL_USER',
-        help_text='Defines the primary system-wide role of the user.'
-    )
-
-    def __str__(self):
-        return self.username # অথবা self.email যদি ইমেইল প্রধান আইডেন্টিফায়ার হয়
-
-    # Method to check if user is a general user (based on primary_role)
-    def is_general_user(self):
-        return self.primary_role == 'GENERAL_USER'
-
-    # আপনি ভিউতে বা টেমপ্লেটে এই মেথডগুলো ব্যবহার করে ইউজারের ক্ষমতা নিয়ন্ত্রণ করতে পারবেন।
-    # যেমন, কোনো ইভেন্ট তৈরি করার সময়:
-    # if request.user.is_authenticated and request.user.is_general_user():
-    #     # Allow event creation
-
-# Profile model (আগের মতোই থাকবে, User মডেলের সাথে OneToOne সম্পর্কে)
 class Profile(models.Model):
     user = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='profile')
     phone_number = models.CharField(max_length=20, blank=True, null=True)
@@ -55,6 +29,7 @@ class Profile(models.Model):
     ]
     gender = models.CharField(max_length=20, choices=GENDER_CHOICES, blank=True, null=True)
     profile_picture = models.ImageField(upload_to=user_profile_image_path, blank=True, null=True)
+    email_verification_token = models.CharField(max_length=100, null=True, blank=True)
 
     def __str__(self):
         return f"{self.user.username}'s Profile"

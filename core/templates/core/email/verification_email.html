@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+<body style="font-family: Arial, sans-serif; line-height: 1.6; color: #374151;">
+    <div style="max-width: 600px; margin: 0 auto; padding: 1.25rem;">
+        <h2 style="color: #059669; font-size: 1.5rem; font-weight: 600; margin-bottom: 1rem;">Welcome to Our EventPro!</h2>
+        <p style="margin-bottom: 1rem;">Hello {{ user.username }},</p>
+        <p style="margin-bottom: 1rem;">Thank you for signing up. Please verify your email address by clicking the button below:</p>
+        <a href="{{ verification_url }}" style="display: inline-block; padding: 0.625rem 1.25rem; background-color: #059669; color: white; text-decoration: none; border-radius: 0.375rem; margin: 1.25rem 0; transition: background-color 0.2s;">
+            Verify Email
+        </a>
+        <p style="margin-bottom: 1rem;">If you didn't create an account, you can safely ignore this email.</p>
+        <p style="margin-bottom: 1rem;">Best regards,<br>Your Team</p>
+    </div>
+</body>
+</html> 
