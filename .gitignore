@@ -27,12 +27,21 @@ db.sqlite3
 db.sqlite3-journal
 media/
 staticfiles/
+static/
+*.pyc
+*.pyo
+*.pyd
+.Python
+*.manifest
+*.spec
 
 # Virtual Environment
 venv/
 env/
 ENV/
 .env
+.venv
+event_management_env/
 
 # IDE
 .idea/
@@ -40,12 +49,18 @@ ENV/
 *.swp
 *.swo
 .DS_Store
+*.sublime-workspace
+*.sublime-project
+*.code-workspace
 
 # Node
 node_modules/
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
+package-lock.json
+yarn.lock
+.pnpm-debug.log*
 
 # Coverage reports
 htmlcov/
@@ -57,6 +72,7 @@ nosetests.xml
 coverage.xml
 *.cover
 .hypothesis/
+.pytest_cache/
 
 # Translations
 *.mo
@@ -70,3 +86,52 @@ celerybeat.pid
 *.bak
 *.tmp
 *~
+
+# Database
+*.sqlite3
+*.db
+*.sql
+*.sqlite3-journal
+*.psql
+*.postgresql
+*.postgres
+
+# Environment variables
+.env
+.env.local
+.env.*.local
+.env.development
+.env.test
+.env.production
+
+# Tailwind
+theme/static/css/dist/
+theme/static/css/src/
+theme/static/css/tailwind.config.js
+
+# System Files
+Thumbs.db
+desktop.ini
+.DS_Store
+*.log
+*.pid
+*.seed
+*.pid.lock
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+# Editor directories and files
+.idea
+.DS_Store
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
