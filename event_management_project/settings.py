@@ -98,7 +98,7 @@ NPM_BIN_PATH = "C:\\Program Files\\nodejs\\npm.cmd"
 
 
 # Custom User Model
-AUTH_USER_MODEL = 'tasks.User'
+AUTH_USER_MODEL = 'core.User'
 
 DATABASES = {
    'default': {
@@ -161,6 +161,18 @@ MEDIA_ROOT = BASE_DIR / 'media'
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
+# Login URL for @login_required decorator
+LOGIN_URL = 'sign_in'
+
 AUTHENTICATION_BACKENDS = [
     'django.contrib.auth.backends.ModelBackend',
 ]
+
+# Email settings
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+EMAIL_HOST = 'smtp.gmail.com'  # Or your SMTP server
+EMAIL_PORT = 587
+EMAIL_USE_TLS = True
+EMAIL_HOST_USER = 'newaddition121383@gmail.com'  # Your email
+EMAIL_HOST_PASSWORD = 'udda vvrj nqze qmdg'  # Your email password or app password
+# DEFAULT_FROM_EMAIL = 'your-email@gmail.com'
