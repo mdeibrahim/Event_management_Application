@@ -1,0 +1,212 @@
+{% comment %} 
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title></title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    
+    
+</head>
+
+<body class="font-['Inter'] bg-gray-100">
+    <div class="min-h-screen flex flex-col">
+        <!-- Desktop Navigation -->
+        <nav class="bg-white shadow-lg hidden md:block fixed top-0 left-0 right-0 z-50">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div class="flex justify-between h-16">
+                    <div class="flex items-center">
+                        <a href="{% url 'dashboard' %}" class="flex-shrink-0 flex items-center">
+                            <span class="text-2xl font-bold text-indigo-600">EventPro</span>
+                        </a>
+                    </div>
+                    <div class="flex items-center space-x-4">
+                        <a href="{% url 'dashboard' %}" data-nav="dashboard"
+                            class="px-3 py-2 rounded-md text-sm font-medium text-gray-700 hover:text-indigo-600 hover:bg-indigo-50 transition-colors duration-200">Dashboard</a>
+                        <a href="{% url 'event' %}" data-nav="event"
+                            class="px-3 py-2 rounded-md text-sm font-medium text-gray-700 hover:text-indigo-600 hover:bg-indigo-50 transition-colors duration-200">Events</a>
+                        <a href="{% url 'add_new' %}" data-nav="add_new"
+                            class="px-3 py-2 rounded-md text-sm font-medium text-gray-700 hover:text-indigo-600 hover:bg-indigo-50 transition-colors duration-200">Add
+                            New</a>
+                    </div>
+                </div>
+            </div>
+        </nav>
+
+        <!-- Messages -->
+        {% if messages %}
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-4">
+            {% for message in messages %}
+            <div
+                class="rounded-md p-4 mb-4 {% if message.tags == 'success' %}bg-green-50 text-green-800{% elif message.tags == 'error' %}bg-red-50 text-red-800{% else %}bg-blue-50 text-blue-800{% endif %}">
+                <div class="flex">
+                    <div class="flex-shrink-0">
+                        {% if message.tags == 'success' %}
+                        <svg class="h-5 w-5 text-green-400" viewBox="0 0 40 40" fill="currentColor">
+                            <path fill-rule="evenodd"
+                                d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
+                                clip-rule="evenodd" />
+                        </svg>
+                        {% elif message.tags == 'error' %}
+                        <svg class="h-5 w-5 text-red-400" viewBox="0 0 40 40" fill="currentColor">
+                            <path fill-rule="evenodd"
+                                d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z"
+                                clip-rule="evenodd" />
+                        </svg>
+                        {% else %}
+                        <svg class="h-5 w-5 text-blue-400" viewBox="0 0 20 20" fill="currentColor">
+                            <path fill-rule="evenodd"
+                                d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z"
+                                clip-rule="evenodd" />
+                        </svg>
+                        {% endif %}
+                    </div>
+                    <div class="ml-3">
+                        <p class="text-sm font-medium">{{ message }}</p>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% endif %}
+
+        <!-- Mobile Navigation -->
+        <nav class="bg-white shadow-lg md:hidden fixed bottom-0 left-0 right-0 z-50">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div class="flex justify-between h-16">
+                    <div class="flex items-center">
+                        <a href="{% url 'dashboard' %}" class="flex-shrink-0 flex items-center">
+                            <span class="text-2xl font-bold text-indigo-600">EventPro</span>
+                        </a>
+                    </div>
+                    <div class="flex items-center">
+                        <button id="mobile-menu-button"
+                            class="p-2 rounded-md text-gray-700 hover:text-indigo-600 hover:bg-indigo-50 focus:outline-none">
+                            <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M4 6h16M4 12h16M4 18h16" />
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Mobile Menu -->
+            <div id="mobile-menu" class="hidden md:hidden">
+                <div class="px-2 pt-2 pb-3 space-y-1">
+                    <a href="{% url 'dashboard' %}" data-nav="dashboard"
+                        class="block px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:text-indigo-600 hover:bg-indigo-50 transition-colors duration-200">Dashboard</a>
+                    <a href="{% url 'event' %}" data-nav="event"
+                        class="block px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:text-indigo-600 hover:bg-indigo-50 transition-colors duration-200">Events</a>
+                    <a href="{% url 'add_new' %}" data-nav="add_new"
+                        class="block px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:text-indigo-600 hover:bg-indigo-50 transition-colors duration-200">Add
+                        New</a>
+                </div>
+            </div>
+        </nav>
+
+        <!-- Main Content -->
+        <main class="flex-grow">
+            {% block content %}{% endblock %}
+        </main>
+
+        <!-- Footer -->
+        <footer class="bg-white shadow-lg mt-auto">
+            <div class="max-w-7xl mx-auto py-4 px-4 sm:px-6 lg:px-8">
+                <p class="text-center text-gray-500 text-sm">© 2024 EventPro. All rights reserved.</p>
+            </div>
+        </footer>
+    </div>
+
+    <!-- Toast Container -->
+    <div id="toast-container" class="fixed top-4 right-4 z-50 w-96"></div>
+
+    <script>
+        const mobileMenuButton = document.getElementById('mobile-menu-button');
+        const mobileMenu = document.getElementById('mobile-menu');
+
+        mobileMenuButton.addEventListener('click', () => {
+            mobileMenu.classList.toggle('hidden');
+        });
+
+        function setActiveNavLink() {
+            const currentPath = window.location.pathname;
+            const navLinks = document.querySelectorAll('[data-nav]');
+
+            navLinks.forEach(link => {
+                const linkPath = link.getAttribute('href');
+                if (currentPath === linkPath) {
+                    link.classList.add('bg-indigo-50', 'text-indigo-700');
+                } else {
+                    link.classList.remove('bg-indigo-50', 'text-indigo-700');
+                }
+            });
+        }
+
+        document.addEventListener('DOMContentLoaded', setActiveNavLink);
+
+        function showToast(message, type = 'success') {
+            const toastContainer = document.getElementById('toast-container');
+            const toast = document.createElement('div');
+
+            const styles = {
+                success: 'bg-green-50 text-green-800 border-green-200',
+                error: 'bg-red-50 text-red-800 border-red-200',
+                info: 'bg-blue-50 text-blue-800 border-blue-200'
+            };
+
+            const icons = {
+                success: `<svg class="h-8 w-8 text-green-400" viewBox="0 0 40 40" fill="currentColor">
+                    <path fill-rule="evenodd" d="M20 36a16 16 0 100-32 16 16 0 000 32zm7.414-18.586a2 2 0 00-2.828-2.828L18 21.172l-4.586-4.586a2 2 0 00-2.828 2.828l4 4a2 2 0 002.828 0l8-8z" clip-rule="evenodd"/>
+                </svg>`,
+                error: `<svg class="h-8 w-8 text-red-400" viewBox="0 0 40 40" fill="currentColor">
+                    <path fill-rule="evenodd" d="M20 36a16 16 0 100-32 16 16 0 000 32zM17.414 14.586a2 2 0 00-2.828 2.828L17.172 20l-2.586 2.586a2 2 0 102.828 2.828L20 22.828l2.586 2.586a2 2 0 002.828-2.828L22.828 20l2.586-2.586a2 2 0 00-2.828-2.828L20 17.172l-2.586-2.586z" clip-rule="evenodd"/>
+                </svg>`,
+                info: `<svg class="h-8 w-8 text-blue-400" viewBox="0 0 40 40" fill="currentColor">
+                    <path fill-rule="evenodd" d="M36 20a16 16 0 11-32 0 16 16 0 0132 0zm-14-4a2 2 0 11-4 0 2 2 0 014 0zm2 2a1 1 0 00-1 1v6a1 1 0 002 0v-6a1 1 0 00-1-1z" clip-rule="evenodd"/>
+                </svg>`
+            };
+
+            toast.className = `transform transition-all duration-300 ease-in-out mb-4 rounded-lg border-2 p-6 shadow-xl ${styles[type]}`;
+            toast.innerHTML = `
+                <div class="flex items-center">
+                    <div class="flex-shrink-0">
+                        ${icons[type]}
+                    </div>
+                    <div class="ml-4 flex-1">
+                        <p class="text-base font-semibold">${message}</p>
+                    </div>
+                    <div class="ml-4 flex-shrink-0">
+                        <button onclick="this.parentElement.parentElement.parentElement.remove()" 
+                            class="inline-flex rounded-md p-2 focus:outline-none focus:ring-2 focus:ring-offset-2 ${type === 'success' ? 'text-green-500 hover:bg-green-100 focus:ring-green-600' : type === 'error' ? 'text-red-500 hover:bg-red-100 focus:ring-red-600' : 'text-blue-500 hover:bg-blue-100 focus:ring-blue-600'}">
+                            <span class="sr-only">Dismiss</span>
+                            <svg class="h-6 w-6" viewBox="0 0 24 24" fill="currentColor">
+                                <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L12 10.586l6.293-6.293a1 1 0 111.414 1.414L13.414 12l6.293 6.293a1 1 0 01-1.414 1.414L12 13.414l-6.293 6.293a1 1 0 01-1.414-1.414L10.586 12 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd"/>
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+            `;
+
+            toastContainer.appendChild(toast);
+
+            setTimeout(() => {
+                toast.style.opacity = '0';
+                toast.style.transform = 'translateX(100%)';
+                setTimeout(() => toast.remove(), 300);
+            }, 5000);
+        }
+
+        {% if messages %}
+        {% for message in messages %}
+        showToast("{{ message }}", "{{ message.tags }}");
+        {% endfor %}
+        {% endif %}
+    </script>
+    {% block extra_js %}{% endblock %}
+</body>
+
+</html> {% endcomment %}

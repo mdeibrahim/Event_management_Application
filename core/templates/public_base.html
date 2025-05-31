@@ -1,0 +1,162 @@
+{% load static tailwind_tags %}
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>{% block title %}{% endblock %}</title>
+        <link rel="stylesheet" href="{% static 'output.css' %}">
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+        {% block extra_css %}{% endblock %}
+        <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+        
+    </head>
+<body class="font-['Inter'] bg-gray-50 text-gray-800">
+    <div class="min-h-screen flex flex-col">
+        <nav class="bg-white shadow-lg fixed top-0 left-0 right-0 z-50">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div class="flex justify-between h-16 items-center">
+                    <div class="flex items-center">
+                        <a href="{% url 'public_home' %}" class="flex-shrink-0 flex items-center">
+                            <span class="text-2xl font-bold text-emerald-600">EventPro</span>
+                        </a>
+                    </div>
+                    <div class="hidden md:flex items-center space-x-6">
+                        <a href="{% url 'public_home' %}" class="nav-link px-3 py-2 rounded-md text-sm font-medium text-gray-700 hover:text-emerald-600 hover:bg-emerald-50 transition-colors duration-200" data-section="home">Home</a>
+                        <a href="#features" class="nav-link px-3 py-2 rounded-md text-sm font-medium text-gray-700 hover:text-emerald-600 hover:bg-emerald-50 transition-colors duration-200" data-section="features">Features</a>
+                        <a href="#about" class="nav-link px-3 py-2 rounded-md text-sm font-medium text-gray-700 hover:text-emerald-600 hover:bg-emerald-50 transition-colors duration-200" data-section="about">About Us</a>
+                        <a href="#blog" class="nav-link px-3 py-2 rounded-md text-sm font-medium text-gray-700 hover:text-emerald-600 hover:bg-emerald-50 transition-colors duration-200" data-section="blog">Blog</a>
+                        <a href="#contact" class="nav-link px-3 py-2 rounded-md text-sm font-medium text-gray-700 hover:text-emerald-600 hover:bg-emerald-50 transition-colors duration-200" data-section="contact">Contact</a>
+                        <a href="{% url 'sign_in' %}" class="ml-4 px-4 py-2 rounded-md text-sm font-semibold {% if request.path == '/sign-in/' %}bg-emerald-700{% else %}bg-emerald-600 hover:bg-emerald-700{% endif %} text-white transition-colors duration-200 shadow">Log In</a>
+                        <a href="{% url 'sign_up' %}" class="px-4 py-2 rounded-md text-sm font-semibold {% if request.path == '/sign-up/' %}bg-emerald-50 border-emerald-700 text-emerald-700{% else %}text-emerald-600 border border-emerald-600 hover:bg-emerald-50{% endif %} transition-colors duration-200 shadow">Sign Up</a>
+                    </div>
+                    <div class="md:hidden flex items-center">
+                        <button id="mobile-menu-button" class="inline-flex items-center justify-center p-2 rounded-md text-gray-700 hover:text-emerald-600 hover:bg-emerald-50 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-emerald-500">
+                            <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+            </div>
+            <div id="mobile-menu" class="md:hidden hidden">
+                <div class="px-2 pt-2 pb-3 space-y-1 sm:px-3">
+                    <a href="{% url 'public_home' %}" class="nav-link block px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:text-emerald-600 hover:bg-emerald-50" data-section="home">Home</a>
+                    <a href="#features" class="nav-link block px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:text-emerald-600 hover:bg-emerald-50" data-section="features">Features</a>
+                    <a href="#about" class="nav-link block px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:text-emerald-600 hover:bg-emerald-50" data-section="about">About Us</a>
+                    <a href="#blog" class="nav-link block px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:text-emerald-600 hover:bg-emerald-50" data-section="blog">Blog</a>
+                    <a href="#contact" class="nav-link block px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:text-emerald-600 hover:bg-emerald-50" data-section="contact">Contact</a>
+                    <a href="{% url 'sign_in' %}" class="block w-full text-center px-4 py-2 mt-2 rounded-md text-base font-semibold {% if request.path == '/sign-in/' %}bg-emerald-700{% else %}bg-emerald-600 hover:bg-emerald-700{% endif %} text-white shadow">Log In</a>
+                    <a href="{% url 'sign_up' %}" class="block w-full text-center px-4 py-2 mt-2 rounded-md text-base font-semibold {% if request.path == '/sign-up/' %}bg-emerald-50 border-emerald-700 text-emerald-700{% else %}text-emerald-600 border border-emerald-600 hover:bg-emerald-50{% endif %} shadow">Sign Up</a>
+                </div>
+            </div>
+        </nav>
+
+        <main class="flex-grow mt-16"> {# Adjust margin-top to clear fixed nav #}
+            {% block content %}
+            {% endblock %}
+        </main>
+
+        <footer class="bg-emerald-900 shadow-inner mt-auto py-8">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center text-gray-300 text-sm">
+                <p>&copy; 2024 EventPro. All rights reserved.</p>
+                <p class="mt-2">
+                    <a href="#" class="hover:text-emerald-400">Privacy Policy</a> |
+                    <a href="#" class="hover:text-emerald-400">Terms of Service</a>
+                </p>
+                <div class="flex justify-center space-x-4 mt-4">
+                    <a href="#" class="text-gray-400 hover:text-emerald-400"><i class="fab fa-facebook-f"></i></a>
+                    <a href="#" class="text-gray-400 hover:text-emerald-400"><i class="fab fa-twitter"></i></a>
+                    <a href="#" class="text-gray-400 hover:text-emerald-400"><i class="fab fa-instagram"></i></a>
+                    <a href="#" class="text-gray-400 hover:text-emerald-400"><i class="fab fa-linkedin-in"></i></a>
+                </div>
+            </div>
+        </footer>
+    </div>
+
+    <script>
+        // Mobile menu toggle
+        const mobileMenuButton = document.getElementById('mobile-menu-button');
+        const mobileMenu = document.getElementById('mobile-menu');
+
+        if (mobileMenuButton && mobileMenu) {
+            mobileMenuButton.addEventListener('click', () => {
+                mobileMenu.classList.toggle('hidden');
+            });
+        }
+
+        // Navigation active state
+        document.addEventListener('DOMContentLoaded', function() {
+            const navLinks = document.querySelectorAll('.nav-link');
+            
+            // Function to update active state
+            function updateActiveState() {
+                const scrollPosition = window.scrollY;
+                const windowHeight = window.innerHeight;
+                const documentHeight = document.documentElement.scrollHeight;
+                
+                // Get all sections
+                const sections = document.querySelectorAll('section[id]');
+                
+                // Check if we're at the bottom of the page (for contact section)
+                const isAtBottom = scrollPosition + windowHeight >= documentHeight - 100;
+                
+                sections.forEach(section => {
+                    const sectionTop = section.offsetTop - 100; // Offset for better detection
+                    const sectionBottom = sectionTop + section.offsetHeight;
+                    const sectionId = section.getAttribute('id');
+                    
+                    // Special handling for contact section
+                    if (sectionId === 'contact' && isAtBottom) {
+                        setActiveLink('contact');
+                        return;
+                    }
+                    
+                    if (scrollPosition >= sectionTop && scrollPosition < sectionBottom) {
+                        setActiveLink(sectionId);
+                    }
+                });
+            }
+
+            // Function to set active link
+            function setActiveLink(sectionId) {
+                // Remove active class from all links
+                navLinks.forEach(link => {
+                    link.classList.remove('text-emerald-600', 'bg-emerald-50');
+                    link.classList.add('text-gray-700');
+                });
+                
+                // Add active class to current section's link
+                const activeLink = document.querySelector(`.nav-link[data-section="${sectionId}"]`);
+                if (activeLink) {
+                    activeLink.classList.remove('text-gray-700');
+                    activeLink.classList.add('text-emerald-600', 'bg-emerald-50');
+                }
+            }
+
+            // Update on scroll
+            window.addEventListener('scroll', updateActiveState);
+            
+            // Update on click
+            navLinks.forEach(link => {
+                link.addEventListener('click', function(e) {
+                    if (this.getAttribute('href').startsWith('#')) {
+                        e.preventDefault();
+                        const targetId = this.getAttribute('href').substring(1);
+                        const targetSection = document.getElementById(targetId);
+                        if (targetSection) {
+                            targetSection.scrollIntoView({ behavior: 'smooth' });
+                            // Set active state immediately after click
+                            setActiveLink(targetId);
+                        }
+                    }
+                });
+            });
+
+            // Initial check
+            updateActiveState();
+        });
+    </script>
+    {% block extra_js %}{% endblock %}
+</body>
+</html>

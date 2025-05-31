@@ -1,0 +1,337 @@
+{% extends 'user_base.html' %}
+{% load static %}
+
+{% block title %}Manage {{ event.name | default:"Event" }}{% endblock %}
+
+{% block content %}
+<main class="max-w-7xl mx-auto py-8 sm:px-6 lg:px-8">
+    <div class="bg-white p-6 sm:p-8 rounded-xl shadow-xl border border-gray-100 mb-8">
+        <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+            <div>
+                <h1 class="text-3xl sm:text-4xl font-bold text-indigo-700">{{ event.name | default:"Event Title" }}</h1>
+                <p class="text-gray-500 mt-2 text-sm">
+                    <i class="fas fa-calendar-alt mr-1.5 text-indigo-400"></i> {{ event.date|date:"l, F j, Y" | default:"N/A" }} at {{ event.time|time:"P" | default:"N/A" }}
+                </p>
+                <p class="text-gray-500 mt-1 text-sm">
+                    <i class="fas fa-map-marker-alt mr-1.5 text-indigo-400"></i> {{ event.location | default:"N/A" }}
+                </p>
+                <p class="mt-2 text-xs">
+                    <span class="font-semibold">Status:</span>
+                    {% if event.status == 'upcoming' %}
+                        <span class="px-2 py-0.5 bg-blue-100 text-blue-700 rounded-full">Upcoming</span>
+                    {% elif event.status == 'ongoing' %}
+                        <span class="px-2 py-0.5 bg-green-100 text-green-700 rounded-full">Ongoing</span>
+                    {% elif event.status == 'past' %}
+                        <span class="px-2 py-0.5 bg-gray-100 text-gray-700 rounded-full">Past</span>
+                    {% else %}
+                        <span class="px-2 py-0.5 bg-yellow-100 text-yellow-700 rounded-full">{{ event.visibility | capfirst | default:"N/A" }}</span>
+                    {% endif %}
+                     | <span class="font-semibold">Visibility:</span> <span class="px-2 py-0.5 bg-gray-100 text-gray-700 rounded-full">{{ event.visibility | capfirst | default:"N/A" }}</span>
+                </p>
+            </div>
+            <div class="flex space-x-3 mt-4 md:mt-0 shrink-0">
+                <a href="" class="inline-flex items-center px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg shadow-md transition-colors duration-200 text-sm">
+                    <i class="fas fa-edit mr-2"></i>Edit Event
+                </a>
+                <button onclick="openConfirmDeleteModal()" class="inline-flex items-center px-4 py-2 bg-red-500 hover:bg-red-600 text-white rounded-lg shadow-md transition-colors duration-200 text-sm">
+                    <i class="fas fa-trash-alt mr-2"></i>Delete Event
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div class="mb-8 border-b border-gray-200">
+        <nav class="-mb-px flex space-x-6" aria-label="Tabs">
+            <a href="#user_management" class="event-tab-link active-tab group inline-flex items-center py-3 px-1 border-b-2 font-medium text-sm text-indigo-600 border-indigo-500" onclick="showEventSection('user_management', this)">
+                <i class="fas fa-users mr-2"></i> User Management
+            </a>
+            <a href="#requests" class="event-tab-link group inline-flex items-center py-3 px-1 border-b-2 font-medium text-sm text-gray-500 hover:text-gray-700 hover:border-gray-300 border-transparent" onclick="showEventSection('requests', this)">
+                <i class="fas fa-user-plus mr-2"></i> Pending Requests
+            </a>
+            <a href="#notifications" class="event-tab-link group inline-flex items-center py-3 px-1 border-b-2 font-medium text-sm text-gray-500 hover:text-gray-700 hover:border-gray-300 border-transparent" onclick="showEventSection('notifications', this)">
+                <i class="fas fa-bell mr-2"></i> Notifications
+            </a>
+            <a href="#participants_list" class="event-tab-link group inline-flex items-center py-3 px-1 border-b-2 font-medium text-sm text-gray-500 hover:text-gray-700 hover:border-gray-300 border-transparent" onclick="showEventSection('participants_list', this)">
+                <i class="fas fa-clipboard-list mr-2"></i> Participants & Volunteers
+            </a>
+        </nav>
+    </div>
+
+    <section id="user_management" class="event-content-section">
+        <h2 class="text-2xl font-semibold text-gray-700 mb-6">Manage Users & Invitations</h2>
+        <div class="bg-white p-6 rounded-lg shadow-md mb-6">
+            <form method="GET" action="#user_management"> {# Action will typically refresh the page with query params #}
+                <label for="user_search_query" class="block text-sm font-medium text-gray-700 mb-1">Search Users</label>
+                <div class="flex space-x-3">
+                    <input type="text" name="user_search_query" id="user_search_query" value="{{ request.GET.user_search_query }}"
+                           class="w-full px-4 py-2.5 border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                           placeholder="Enter name, email, or user ID...">
+                    <button type="submit" class="px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg shadow-md transition-colors text-sm font-medium">Search</button>
+                </div>
+            </form>
+        </div>
+
+        {% if searched_users %}
+            <h3 class="text-xl font-medium text-gray-600 mb-4">Search Results ({{ searched_users.count }})</h3>
+            <div class="space-y-4">
+                {% for s_user in searched_users %}
+                <div class="bg-white p-4 rounded-lg shadow-sm border flex justify-between items-center">
+                    <div>
+                        <p class="font-semibold text-gray-800">{{ s_user.full_name | default:s_user.username }}</p>
+                        <p class="text-sm text-gray-500">{{ s_user.email }} (ID: {{ s_user.id }})</p>
+                    </div>
+                    <div class="flex space-x-2">
+                        <button onclick="openInviteModal('{{ s_user.id }}', '{{ s_user.full_name | default:s_user.username }}', 'participant')" class="px-3 py-1.5 text-xs font-medium text-green-700 bg-green-100 hover:bg-green-200 rounded-md">Invite as Participant</button>
+                        <button onclick="openInviteModal('{{ s_user.id }}', '{{ s_user.full_name | default:s_user.username }}', 'volunteer')" class="px-3 py-1.5 text-xs font-medium text-blue-700 bg-blue-100 hover:bg-blue-200 rounded-md">Invite as Volunteer</button>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        {% elif request.GET.user_search_query %}
+            <p class="text-gray-500 bg-white p-4 rounded-lg shadow-sm">No users found matching your search criteria.</p>
+        {% endif %}
+    </section>
+
+    <section id="requests" class="event-content-section" style="display: none;">
+        <h2 class="text-2xl font-semibold text-gray-700 mb-6">Pending Join/Volunteer Requests ({{ pending_requests.count | default:0 }})</h2>
+        <div class="space-y-4">
+            {% if pending_requests %}
+                {% for req in pending_requests %}
+                <div class="bg-white p-4 rounded-lg shadow-sm border flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
+                    <div>
+                        <p class="font-semibold text-gray-800">{{ req.user.full_name | default:req.user.username }}</p>
+                        <p class="text-sm text-gray-500">{{ req.user.email }}</p>
+                        <p class="text-sm mt-1">Wants to join as: <span class="font-medium text-indigo-600">{{ req.role_requested | capfirst }}</span></p>
+                        <p class="text-xs text-gray-400 mt-1">Requested on: {{ req.requested_at|date:"M d, Y, P" }}</p>
+                    </div>
+                    <div class="flex space-x-2 mt-2 sm:mt-0 shrink-0">
+                        <form method="POST" action="{% url 'accept_request_url' request_id=req.id %}" class="inline">
+                            {% csrf_token %}
+                            <button type="submit" class="px-3 py-1.5 text-xs font-medium text-white bg-green-500 hover:bg-green-600 rounded-md">Accept</button>
+                        </form>
+                        <form method="POST" action="{% url 'reject_request_url' request_id=req.id %}" class="inline">
+                            {% csrf_token %}
+                            <button type="submit" class="px-3 py-1.5 text-xs font-medium text-white bg-red-500 hover:bg-red-600 rounded-md">Reject</button>
+                        </form>
+                    </div>
+                </div>
+                {% endfor %}
+            {% else %}
+                <p class="text-gray-500 bg-white p-4 rounded-lg shadow-sm">No pending requests for this event.</p>
+            {% endif %}
+        </div>
+    </section>
+
+    <section id="notifications" class="event-content-section" style="display: none;">
+        <h2 class="text-2xl font-semibold text-gray-700 mb-6">Event Notifications ({{ notifications_list.count | default:0 }})</h2>
+        <div class="space-y-3">
+            {% if notifications_list %}
+                {% for notification in notifications_list %}
+                <div class="bg-white p-4 rounded-lg shadow-sm border-l-4 {% if notification.type == 'invitation_sent' %}border-blue-500{% elif notification.type == 'request_received' %}border-yellow-500{% elif notification.type == 'user_joined' %}border-green-500{% else %}border-gray-300{% endif %}">
+                    <p class="text-sm text-gray-700">{{ notification.message }}</p>
+                    <p class="text-xs text-gray-400 mt-1">{{ notification.timestamp|date:"M d, Y, P" }}</p>
+                </div>
+                {% endfor %}
+            {% else %}
+                 <p class="text-gray-500 bg-white p-4 rounded-lg shadow-sm">No notifications for this event yet.</p>
+            {% endif %}
+        </div>
+    </section>
+
+    <section id="participants_list" class="event-content-section" style="display: none;">
+        <h2 class="text-2xl font-semibold text-gray-700 mb-6">Registered Participants & Volunteers ({{ event_attendees.count | default:0 }})</h2>
+        <div class="bg-white p-6 rounded-lg shadow-md">
+            {% if event_attendees %}
+            <div class="overflow-x-auto">
+                <table class="min-w-full divide-y divide-gray-200">
+                    <thead class="bg-gray-50">
+                        <tr>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Email</th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Role</th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Registered On</th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody class="bg-white divide-y divide-gray-200">
+                        {% for attendee in event_attendees %}
+                        <tr>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{{ attendee.user.full_name | default:attendee.user.username }}</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ attendee.user.email }}</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm">
+                                <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full 
+                                {% if attendee.role == 'participant' %} bg-green-100 text-green-800 {% elif attendee.role == 'volunteer' %} bg-blue-100 text-blue-800 {% else %} bg-gray-100 text-gray-800 {% endif %}">
+                                    {{ attendee.role | capfirst }}
+                                </span>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ attendee.registered_at|date:"M d, Y" }}</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                                <a href="{% url 'user_profile_url' user_id=attendee.user.id %}" class="text-indigo-600 hover:text-indigo-900 mr-2">View</a>
+                                </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <p class="text-gray-500 text-center py-4">No participants or volunteers registered for this event yet.</p>
+            {% endif %}
+        </div>
+    </section>
+
+</main>
+
+<div id="inviteUserModal" class="fixed inset-0 bg-gray-900 bg-opacity-75 z-50 hidden">
+    <div class="flex items-center justify-center min-h-screen p-4">
+        <div class="bg-white p-6 md:p-8 rounded-xl shadow-2xl w-full max-w-md transform transition-all duration-300 scale-95 opacity-0" id="inviteUserModalContent">
+            <div class="flex justify-between items-center mb-6">
+                <h3 class="text-2xl font-semibold text-gray-800">Invite <span id="inviteUserName" class="text-indigo-600">User</span></h3>
+                <button onclick="closeInviteModal()" class="text-gray-500 hover:text-red-600 transition-colors">
+                    <i class="fas fa-times fa-lg"></i>
+                </button>
+            </div>
+            <form method="POST" action="" id="inviteForm">
+                {% csrf_token %}
+                <input type="hidden" name="user_id_to_invite" id="userIdToInvite">
+                <input type="hidden" name="invitation_role" id="invitationRole">
+                <p class="mb-4 text-gray-600">You are about to invite <strong id="modalUserNameStrong">User</strong> to join this event as a <strong id="modalRoleStrong">Role</strong>.</p>
+                <div>
+                    <label for="invitation_message" class="block text-sm font-medium text-gray-700 mb-1">Optional Message</label>
+                    <textarea name="invitation_message" id="invitation_message" rows="3" class="w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:ring-indigo-500 focus:border-indigo-500" placeholder="Add a personal touch to your invitation..."></textarea>
+                </div>
+                <div class="mt-6 flex justify-end space-x-3">
+                    <button type="button" onclick="closeInviteModal()" class="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg">Cancel</button>
+                    <button type="submit" class="px-4 py-2 text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 rounded-lg">Send Invitation</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<div id="confirmDeleteModal" class="fixed inset-0 bg-gray-900 bg-opacity-75 z-50 hidden">
+    <div class="flex items-center justify-center min-h-screen p-4">
+        <div class="bg-white p-6 md:p-8 rounded-xl shadow-2xl w-full max-w-md transform transition-all duration-300 scale-95 opacity-0" id="confirmDeleteModalContent">
+            <div class="text-center">
+                <div class="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-red-100 mb-4">
+                    <i class="fas fa-exclamation-triangle fa-2x text-red-600"></i>
+                </div>
+                <h3 class="text-xl font-semibold text-gray-800 mb-2">Delete Event</h3>
+                <p class="text-sm text-gray-500 mb-6">Are you sure you want to delete the event "{{ event.name | default:'this event' }}"? This action cannot be undone.</p>
+            </div>
+            <form method="POST" action="">
+                {% csrf_token %}
+                <div class="flex justify-center space-x-4">
+                    <button type="button" onclick="closeConfirmDeleteModal()" class="px-6 py-2 text-sm font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg">Cancel</button>
+                    <button type="submit" class="px-6 py-2 text-sm font-medium text-white bg-red-600 hover:bg-red-700 rounded-lg">Yes, Delete</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+
+<script>
+    function showEventSection(sectionId, clickedTab) {
+        document.querySelectorAll('.event-content-section').forEach(function(section) {
+            section.style.display = 'none';
+        });
+        document.getElementById(sectionId).style.display = 'block';
+
+        document.querySelectorAll('.event-tab-link').forEach(function(tab) {
+            tab.classList.remove('active-tab', 'text-indigo-600', 'border-indigo-500');
+            tab.classList.add('text-gray-500', 'hover:text-gray-700', 'hover:border-gray-300', 'border-transparent');
+        });
+        clickedTab.classList.add('active-tab', 'text-indigo-600', 'border-indigo-500');
+        clickedTab.classList.remove('text-gray-500', 'hover:text-gray-700', 'hover:border-gray-300', 'border-transparent');
+        window.location.hash = sectionId;
+    }
+
+    document.addEventListener('DOMContentLoaded', function() {
+        const hash = window.location.hash.substring(1);
+        const validSections = ['user_management', 'requests', 'notifications', 'participants_list'];
+        let sectionToShow = 'user_management';
+
+        if (hash && validSections.includes(hash)) {
+            sectionToShow = hash;
+        }
+        
+        const tabForSection = document.querySelector('.event-tab-link[href="#' + sectionToShow + '"]');
+        if (tabForSection) {
+            showEventSection(sectionToShow, tabForSection);
+        } else {
+            const defaultTab = document.querySelector('.event-tab-link[href="#user_management"]');
+            if (defaultTab) showEventSection('user_management', defaultTab);
+        }
+    });
+
+    // Invite Modal JS
+    const inviteUserModal = document.getElementById('inviteUserModal');
+    const inviteUserModalContent = document.getElementById('inviteUserModalContent');
+    const inviteUserNameSpan = document.getElementById('inviteUserName');
+    const modalUserNameStrong = document.getElementById('modalUserNameStrong');
+    const modalRoleStrong = document.getElementById('modalRoleStrong');
+    const userIdToInviteInput = document.getElementById('userIdToInvite');
+    const invitationRoleInput = document.getElementById('invitationRole');
+
+    function openInviteModal(userId, userName, role) {
+        userIdToInviteInput.value = userId;
+        invitationRoleInput.value = role;
+        inviteUserNameSpan.textContent = userName;
+        modalUserNameStrong.textContent = userName;
+        modalRoleStrong.textContent = role;
+        inviteUserModal.classList.remove('hidden');
+        setTimeout(() => {
+            inviteUserModalContent.classList.remove('scale-95', 'opacity-0');
+            inviteUserModalContent.classList.add('scale-100', 'opacity-100');
+        }, 50);
+    }
+
+    function closeInviteModal() {
+        inviteUserModalContent.classList.add('scale-95', 'opacity-0');
+        inviteUserModalContent.classList.remove('scale-100', 'opacity-100');
+        setTimeout(() => {
+            inviteUserModal.classList.add('hidden');
+        }, 300);
+    }
+
+    // Confirm Delete Modal JS
+    const confirmDeleteModal = document.getElementById('confirmDeleteModal');
+    const confirmDeleteModalContent = document.getElementById('confirmDeleteModalContent');
+
+    function openConfirmDeleteModal() {
+        confirmDeleteModal.classList.remove('hidden');
+        setTimeout(() => {
+            confirmDeleteModalContent.classList.remove('scale-95', 'opacity-0');
+            confirmDeleteModalContent.classList.add('scale-100', 'opacity-100');
+        }, 50);
+    }
+
+    function closeConfirmDeleteModal() {
+        confirmDeleteModalContent.classList.add('scale-95', 'opacity-0');
+        confirmDeleteModalContent.classList.remove('scale-100', 'opacity-100');
+        setTimeout(() => {
+            confirmDeleteModal.classList.add('hidden');
+        }, 300);
+    }
+
+    // Close modals with Escape key
+    document.addEventListener('keydown', function (event) {
+        if (event.key === 'Escape') {
+            if (!inviteUserModal.classList.contains('hidden')) {
+                closeInviteModal();
+            }
+            if (!confirmDeleteModal.classList.contains('hidden')) {
+                closeConfirmDeleteModal();
+            }
+        }
+    });
+</script>
+
+<style>
+/* Additional custom styles if needed */
+.active-tab svg { /* Ensure icon color changes for active tab if not handled by Tailwind directly */
+    color: inherit; 
+}
+</style>
+
+{% endblock %}

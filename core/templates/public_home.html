@@ -1,0 +1,209 @@
+{% extends "public_base.html" %}
+{% load static %} {# If you plan to use Django's static files for images directly #}
+
+{% block title %}Your Premier Event Management Solution - EventPro{% endblock %}
+
+{% block content %}
+<section id="home" class="relative bg-gradient-to-r from-emerald-700 to-emerald-900 text-white py-20 md:py-32 overflow-hidden"
+    style="background-image: url('{% static 'images/event_home.png' %}'); background-size: cover; background-position: center; background-repeat: no-repeat;">
+    <div class="absolute inset-0 bg-black opacity-50 z-10"></div> {# Overlay for better text readability #}
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-20 text-center">
+        <h1 class="text-4xl text-amber-200 md:text-6xl font-extrabold leading-tight mb-6 animate-fade-in-up">
+            Your Vision, Our Expertise: <br class="hidden md:inline">Seamless Event Management
+        </h1>
+        <p class="text-lg md:text-xl mb-10 max-w-3xl mx-auto opacity-90 animate-fade-in">
+            From intimate gatherings to grand celebrations, EventPro empowers you to plan, promote, and execute
+            unforgettable events with ease.
+        </p>
+        <div
+            class="flex flex-col sm:flex-row justify-center space-y-4 sm:space-y-0 sm:space-x-4 animate-fade-in-up delay-200">
+            <a href="#" class="bg-amber-400 hover:bg-amber-500 text-emerald-900 font-bold py-3 px-8 rounded-full transition-all duration-300 shadow-lg hover:shadow-xl">
+                Start Planning Your Event
+            </a>
+            <a href="#features" class="bg-transparent hover:bg-emerald-800 text-white border-2 border-white hover:border-amber-400 font-bold py-3 px-8 rounded-full transition-all duration-300">
+                Learn More
+            </a>
+        </div>
+    </div>
+</section>
+
+<section id="features" class="py-16 bg-white">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+        <h2 class="text-3xl md:text-4xl font-bold text-emerald-900 mb-12">Why Choose EventPro?</h2>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-10">
+            <div
+                class="border-2 border-emerald-200 p-8 rounded-lg shadow-md hover:shadow-xl transition-all duration-500 ease-in-out transform hover:-translate-y-2 hover:scale-100">
+                <div class="text-emerald-600 text-5xl mb-6 flex justify-center">
+                    <i class="fas fa-calendar-check"></i> {# Icon placeholder #}
+                </div>
+                <h3 class="text-xl font-semibold text-emerald-900 mb-4">Effortless Event Creation</h3>
+                <p class="text-gray-600">Design stunning event pages, set ticketing options, and manage registrations
+                    seamlessly. Our intuitive interface makes event setup a breeze.</p>
+            </div>
+            <div
+                class="border-2 border-emerald-200 p-8 rounded-lg shadow-md hover:shadow-xl transition-all duration-500 ease-in-out transform hover:-translate-y-2 hover:scale-100">
+                <div class="text-emerald-600 text-5xl mb-6 flex justify-center">
+                    <i class="fas fa-ticket-alt"></i> {# Icon placeholder #}
+                </div>
+                <h3 class="text-xl font-semibold text-emerald-900 mb-4">Smart Ticketing & Payments</h3>
+                <p class="text-gray-600">Handle diverse ticket types, discounts, and secure payments with built-in
+                    financial tracking. Get paid faster and manage finances efficiently.</p>
+            </div>
+            <div
+                class="border-2 border-emerald-200 p-8 rounded-lg shadow-md hover:shadow-xl transition-all duration-500 ease-in-out transform hover:-translate-y-2 hover:scale-100">
+                <div class="text-emerald-600 text-5xl mb-6 flex justify-center">
+                    <i class="fas fa-bullhorn"></i> {# Icon placeholder #}
+                </div>
+                <h3 class="text-xl font-semibold text-emerald-900 mb-4">Powerful Promotion Tools</h3>
+                <p class="text-gray-600">Reach a wider audience with integrated marketing tools, social media sharing,
+                    and email campaigns to boost your event attendance.</p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<section class="py-16 border-2 rounded-lg border-emerald-200 w-3/4 mx-auto">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+        <h2 class="text-3xl md:text-4xl font-bold text-emerald-900 mb-12">How EventPro Works</h2>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-10 items-center">
+            <div class="flex flex-col items-center">
+                <div
+                    class="bg-emerald-100 text-emerald-600 rounded-full h-20 w-20 flex items-center justify-center text-3xl font-bold mb-6 shadow-md">
+                    1</div>
+                <h3 class="text-xl font-semibold text-emerald-900 mb-2">Create Your Event</h3>
+                <p class="text-gray-600 text-center">Define details, set schedule, and design your unique event page in
+                    minutes.</p>
+            </div>
+            <div class="flex flex-col items-center">
+                <div
+                    class="bg-emerald-100 text-emerald-600 rounded-full h-20 w-20 flex items-center justify-center text-3xl font-bold mb-6 shadow-md">
+                    2</div>
+                <h3 class="text-xl font-semibold text-emerald-900 mb-2">Promote & Sell Tickets</h3>
+                <p class="text-gray-600 text-center">Leverage our marketing tools to spread the word and manage ticket
+                    sales effortlessly.</p>
+            </div>
+            <div class="flex flex-col items-center">
+                <div
+                    class="bg-emerald-100 text-emerald-600 rounded-full h-20 w-20 flex items-center justify-center text-3xl font-bold mb-6 shadow-md">
+                    3</div>
+                <h3 class="text-xl font-semibold text-emerald-900 mb-2">Execute & Analyze</h3>
+                <p class="text-gray-600 text-center">Run your event smoothly and gain insights with powerful analytics
+                    and reporting.</p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<section class="py-16 bg-white">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+        <h2 class="text-3xl md:text-4xl font-bold text-emerald-900 mb-12">What Our Users Say</h2>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+            <div class="bg-emerald-50 p-8 rounded-lg shadow-md text-left">
+                <p class="text-lg text-gray-700 italic mb-4">"EventPro transformed how we manage our annual conference.
+                    The ticketing system is a dream, and the analytics are invaluable!"</p>
+                <p class="font-semibold text-emerald-900">- Jane Doe, Conference Organizer</p>
+                <p class="text-sm text-gray-600">Tech Summit 2024</p>
+            </div>
+            <div class="bg-emerald-50 p-8 rounded-lg shadow-md text-left">
+                <p class="text-lg text-gray-700 italic mb-4">"Creating our charity gala was so much easier with
+                    EventPro. The customization options were perfect, and support was fantastic."</p>
+                <p class="font-semibold text-emerald-900">- John Smith, Charity Coordinator</p>
+                <p class="text-sm text-gray-600">Annual Charity Gala</p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<section id="blog" class="py-16 bg-gray-50">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <h2 class="text-3xl md:text-4xl font-bold text-emerald-900 text-center mb-12">Latest from Our Blog</h2>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+            <div class="bg-white rounded-lg shadow-md overflow-hidden position-relative border-2 border-emerald-200 p-6">
+                <img src="{% static 'images/Stages.jpg' %}" alt="Event Planning Tips"
+                    class="w-full h-48 object-cover">
+                <div class="p-2">
+                    <h3 class="text-xl font-semibold text-emerald-900 mb-3">Top 5 Tips for Stress-Free Event Planning</h3>
+                    <p class="text-gray-600 text-sm mb-4">Discover expert strategies to streamline your event planning
+                        process and avoid common pitfalls. Learn from the pros!</p>
+                    <a href="#" class="text-emerald-600 hover:text-emerald-800 font-semibold text-sm">Read More <i
+                            class="fas fa-arrow-right ml-1"></i></a>
+                </div>
+            </div>
+            <div class="bg-white rounded-lg shadow-md overflow-hidden border-2 border-emerald-200 p-6">
+                <img src="{% static 'images/Event-Marketing.webp' %}" alt="Event Marketing Strategies"
+                    class="w-full h-48 object-cover">
+                <div class="p-2">
+                    <h3 class="text-xl font-semibold text-emerald-900 mb-3">Effective Strategies to Market Your Event</h3>
+                    <p class="text-gray-600 text-sm mb-4">Learn how to boost your event's visibility and attract more
+                        attendees with proven marketing techniques.</p>
+                    <a href="#" class="text-emerald-600 hover:text-emerald-800 font-semibold text-sm">Read More <i
+                            class="fas fa-arrow-right ml-1"></i></a>
+                </div>
+            </div>
+            <div class="bg-white rounded-lg shadow-md overflow-hidden border-2 border-emerald-200 p-6">
+                <img src="{% static 'images/tech_for_events.png' %}" alt="Tech for Events" class="w-full h-48 object-cover">
+                <div class="p-2">
+                    <h3 class="text-xl font-semibold text-emerald-900 mb-3">The Future of Events: Leveraging Tech for
+                        Success</h3>
+                    <p class="text-gray-600 text-sm mb-4">Explore the latest technological innovations transforming the
+                        event industry and how you can apply them.</p>
+                    <a href="#" class="text-emerald-600 hover:text-emerald-800 font-semibold text-sm">Read More <i
+                            class="fas fa-arrow-right ml-1"></i></a>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<section class="bg-emerald-700 py-16 text-white text-center">
+    <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+        <h2 class="text-3xl md:text-4xl font-bold mb-6">Ready to Create Your Next Unforgettable Event?</h2>
+        <p class="text-lg opacity-90 mb-10">Join thousands of successful event organizers who trust EventPro for their
+            planning needs. Get started today!</p>
+        <a href="{% url 'sign_up' %}"
+            class="bg-amber-400 hover:bg-amber-500 text-emerald-900 font-bold py-4 px-10 rounded-full text-xl transition-all duration-300 shadow-xl transform hover:scale-105">
+            Sign Up for Free
+        </a>
+    </div>
+</section>
+
+<section id="about" class="py-16 bg-white">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+        <h2 class="text-3xl md:text-4xl font-bold text-emerald-900 mb-12">About EventPro</h2>
+        <div class="max-w-3xl mx-auto">
+            <p class="text-lg text-gray-700 leading-relaxed mb-6">
+                EventPro was founded with a single mission: to simplify event management for everyone. We believe that
+                organizing an event, big or small, should be an exciting and stress-free experience. Our platform
+                provides a comprehensive suite of tools designed to handle everything from initial planning and
+                promotion to ticket sales and post-event analysis.
+            </p>
+            <p class="text-lg text-gray-700 leading-relaxed">
+                We are dedicated to continuous innovation, ensuring our users have access to the most efficient and
+                powerful features to make every event a resounding success.
+            </p>
+        </div>
+    </div>
+</section>
+
+<section id="contact" class="py-16 bg-gray-50">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+        <h2 class="text-3xl md:text-4xl font-bold text-emerald-900 mb-12">Get in Touch</h2>
+        <p class="text-lg text-gray-700 mb-8 max-w-2xl mx-auto">
+            Have questions or need assistance? Our team is here to help!
+        </p>
+        <div class="flex flex-col md:flex-row justify-center space-y-6 md:space-y-0 md:space-x-8">
+            <div class="flex items-center justify-center bg-white p-6 rounded-lg shadow-md w-full md:w-auto">
+                <i class="fas fa-envelope text-emerald-600 text-2xl mr-4"></i>
+                <p class="text-lg text-gray-800">support@eventpro.com</p>
+            </div>
+            <div class="flex items-center justify-center bg-white p-6 rounded-lg shadow-md w-full md:w-auto">
+                <i class="fas fa-phone-alt text-emerald-600 text-2xl mr-4"></i>
+                <p class="text-lg text-gray-800">+880 1XXXXXXXXXX</p>
+            </div>
+        </div>
+        <p class="text-sm text-gray-600 mt-8">For more detailed inquiries, please visit our <a href="#"
+                class="text-emerald-600 hover:underline">Support Center</a>.</p>
+    </div>
+</section>
+
+{% endblock %}
