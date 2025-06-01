@@ -48,6 +48,10 @@ def public_home(request):
     return render(request, 'public_home.html')
 
 def sign_up(request):
+    # Check if user is already logged in
+    if request.user.is_authenticated:
+        return redirect('user_home')
+    
     if request.method == 'POST':
         form = RegestrationForm(request.POST)
         if form.is_valid():
@@ -87,6 +91,10 @@ def verify_email(request, token):
         return redirect('sign_in')
 
 def sign_in(request):
+    # Check if user is already logged in
+    if request.user.is_authenticated:
+        return redirect('user_home')
+    
     if request.method == 'POST':
         email = request.POST.get('email')
         password = request.POST.get('password')

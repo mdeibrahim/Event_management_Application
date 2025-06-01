@@ -5,12 +5,19 @@ import uuid
 class User(AbstractUser):
     ROLE_CHOICES = [
         ('GENERAL_USER', 'General User'),
+        ('EVENT_MANAGER', 'Event Manager'),
+        ('VOLUNTEER', 'Volunteer'),
+        ('PARTICIPANT', 'Participant'),
+        ('ADMIN', 'Admin'),
     ]
     
     # Unique identifier for the user
     user_id = models.UUIDField(default=uuid.uuid4, editable=False, unique=True)
     
-    # Inherits username, first_name, last_name, email, password, etc.
+    # Make email field unique
+    email = models.EmailField(unique=True, verbose_name='email address')
+    
+    # Inherits username, first_name, last_name, password, etc.
     primary_role = models.CharField(
         max_length=20,
         choices=ROLE_CHOICES,

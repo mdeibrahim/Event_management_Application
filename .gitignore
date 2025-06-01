@@ -19,19 +19,7 @@ wheels/
 *.egg-info/
 .installed.cfg
 *.egg
-.pytest_cache/
-.coverage
-htmlcov/
-.tox/
-.nox/
-.hypothesis/
-.coverage.*
-coverage.xml
-*.cover
-*.py,cover
-.hypothesis/
-.pytest_cache/
-cover/
+MANIFEST
 
 # Django
 *.log
@@ -51,22 +39,6 @@ static/
 *.mo
 celerybeat-schedule
 celerybeat.pid
-*.sqlite3
-*.db
-*.sql
-*.sqlite3-journal
-*.psql
-*.postgresql
-*.postgres
-*.bak
-*.tmp
-*~
-*.swp
-*.swo
-.DS_Store
-*.sublime-workspace
-*.sublime-project
-*.code-workspace
 
 # Virtual Environment
 venv/
@@ -90,9 +62,6 @@ pythonenv*/
 .project
 .pydevproject
 .settings/
-*.sublime-workspace
-*.sublime-project
-*.code-workspace
 *.tmproj
 *.esproj
 nbproject/
@@ -136,11 +105,6 @@ coverage.xml
 celerybeat-schedule
 celerybeat.pid
 
-# Backup files
-*.bak
-*.tmp
-*~
-
 # Database
 *.sqlite3
 *.db
@@ -149,6 +113,8 @@ celerybeat.pid
 *.psql
 *.postgresql
 *.postgres
+*.bak
+*.tmp
 
 # Environment variables
 .env
@@ -187,28 +153,3 @@ lerna-debug.log*
 log/
 tmp/
 temp/
-
-# Editor directories and files
-.idea
-.DS_Store
-*.suo
-*.ntvs*
-*.njsproj
-*.sln
-*.sw?
-.vs/
-*.sublime-workspace
-*.sublime-project
-*.code-workspace
-.project
-.pydevproject
-.settings/
-*.tmproj
-*.esproj
-nbproject/
-_private/
-.atom/
-.buildlog/
-.history
-.svn/
-migrate_working_dir/
