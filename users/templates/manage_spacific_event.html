@@ -5,10 +5,11 @@
 
 {% block content %}
 <main class="max-w-7xl mx-auto py-8 sm:px-6 lg:px-8">
+    
     <div class="bg-white p-6 sm:p-8 rounded-xl shadow-xl border border-gray-100 mb-8">
         <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
             <div>
-                <h1 class="text-3xl sm:text-4xl font-bold text-indigo-700">{{ event.name | default:"Event Title" }}</h1>
+                <h1 class="text-3xl sm:text-4xl font-bold text-indigo-700">{{ event.title | default:"Event Title" }}</h1>
                 <p class="text-gray-500 mt-2 text-sm">
                     <i class="fas fa-calendar-alt mr-1.5 text-indigo-400"></i> {{ event.date|date:"l, F j, Y" | default:"N/A" }} at {{ event.time|time:"P" | default:"N/A" }}
                 </p>
@@ -17,20 +18,24 @@
                 </p>
                 <p class="mt-2 text-xs">
                     <span class="font-semibold">Status:</span>
-                    {% if event.status == 'upcoming' %}
+                    {% if is_running %}
+                        <span class="px-2 py-0.5 bg-green-100 text-green-700 rounded-full">Running</span>
+                    {% elif event.date > today %}
                         <span class="px-2 py-0.5 bg-blue-100 text-blue-700 rounded-full">Upcoming</span>
-                    {% elif event.status == 'ongoing' %}
-                        <span class="px-2 py-0.5 bg-green-100 text-green-700 rounded-full">Ongoing</span>
-                    {% elif event.status == 'past' %}
-                        <span class="px-2 py-0.5 bg-gray-100 text-gray-700 rounded-full">Past</span>
+                    {% elif event.date == today %}
+                        <span class="px-2 py-0.5 bg-yellow-100 text-yellow-700 rounded-full">Today</span>
                     {% else %}
-                        <span class="px-2 py-0.5 bg-yellow-100 text-yellow-700 rounded-full">{{ event.visibility | capfirst | default:"N/A" }}</span>
+                        <span class="px-2 py-0.5 bg-emerald-100 text-gray-700 rounded-full">Past</span>
                     {% endif %}
                      | <span class="font-semibold">Visibility:</span> <span class="px-2 py-0.5 bg-gray-100 text-gray-700 rounded-full">{{ event.visibility | capfirst | default:"N/A" }}</span>
                 </p>
+                <!-- Server Time Display -->
+                <p class="mt-2 text-xs text-gray-500">
+                    <i class="fas fa-server mr-1.5 text-indigo-400"></i> Server Time: {{ current_time|date:"F j, Y" }} at {{ current_time|time:"g:i:s A" }}
+                </p>
             </div>
             <div class="flex space-x-3 mt-4 md:mt-0 shrink-0">
-                <a href="" class="inline-flex items-center px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg shadow-md transition-colors duration-200 text-sm">
+                <a href="{% url 'manager_update_event' event_id=event.event_id %}" class="inline-flex items-center px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg shadow-md transition-colors duration-200 text-sm">
                     <i class="fas fa-edit mr-2"></i>Edit Event
                 </a>
                 <button onclick="openConfirmDeleteModal()" class="inline-flex items-center px-4 py-2 bg-red-500 hover:bg-red-600 text-white rounded-lg shadow-md transition-colors duration-200 text-sm">
@@ -39,6 +44,63 @@
             </div>
         </div>
     </div>
+
+    <!-- Event Type Navigation -->
+    {% comment %} <div class="mb-8">
+        <div class="flex justify-between items-center mb-4">
+            <h2 class="text-xl font-semibold text-gray-700">{{ event_list_title }}</h2>
+            <div class="flex space-x-2">
+                <a href="?type=total" class="px-3 py-1.5 text-sm {% if request.GET.type == 'total' or not request.GET.type %}bg-indigo-100 text-indigo-700{% else %}bg-gray-100 text-gray-700{% endif %} rounded-md hover:bg-indigo-50 transition-colors">Total</a>
+                <a href="?type=upcoming" class="px-3 py-1.5 text-sm {% if request.GET.type == 'upcoming' %}bg-indigo-100 text-indigo-700{% else %}bg-gray-100 text-gray-700{% endif %} rounded-md hover:bg-indigo-50 transition-colors">Upcoming</a>
+                <a href="?type=past" class="px-3 py-1.5 text-sm {% if request.GET.type == 'past' %}bg-indigo-100 text-indigo-700{% else %}bg-gray-100 text-gray-700{% endif %} rounded-md hover:bg-indigo-50 transition-colors">Past</a>
+            </div>
+        </div>
+        <div class="bg-white rounded-lg shadow-md overflow-hidden">
+            <div class="overflow-x-auto">
+                <table class="min-w-full divide-y divide-gray-200">
+                    <thead class="bg-gray-50">
+                        <tr>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Event Name</th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Location</th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                        </tr>
+                    </thead>
+                    <tbody class="bg-white divide-y divide-gray-200">
+                        {% for event in events_type %}
+                        <tr class="hover:bg-gray-50">
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <div class="text-sm font-medium text-gray-900">{{ event.title }}</div>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <div class="text-sm text-gray-900">{{ event.date|date:"M d, Y" }}</div>
+                                <div class="text-xs text-gray-500">{{ event.time|time:"H:i A" }}</div>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <div class="text-sm text-gray-900">{{ event.location }}</div>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                {% if event.date > timezone.now.date %}
+                                    <span class="px-2 py-1 text-xs font-medium bg-blue-100 text-blue-800 rounded-full">Upcoming</span>
+                                {% elif event.date == timezone.now.date %}
+                                    <span class="px-2 py-1 text-xs font-medium bg-green-100 text-green-800 rounded-full">Today</span>
+                                {% else %}
+                                    <span class="px-2 py-1 text-xs font-medium bg-gray-100 text-gray-800 rounded-full">Past</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="4" class="px-6 py-4 text-center text-sm text-gray-500">
+                                No events found in this category.
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div> {% endcomment %}
 
     <div class="mb-8 border-b border-gray-200">
         <nav class="-mb-px flex space-x-6" aria-label="Tabs">
@@ -60,14 +122,34 @@
     <section id="user_management" class="event-content-section">
         <h2 class="text-2xl font-semibold text-gray-700 mb-6">Manage Users & Invitations</h2>
         <div class="bg-white p-6 rounded-lg shadow-md mb-6">
-            <form method="GET" action="#user_management"> {# Action will typically refresh the page with query params #}
-                <label for="user_search_query" class="block text-sm font-medium text-gray-700 mb-1">Search Users</label>
-                <div class="flex space-x-3">
-                    <input type="text" name="user_search_query" id="user_search_query" value="{{ request.GET.user_search_query }}"
-                           class="w-full px-4 py-2.5 border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
-                           placeholder="Enter name, email, or user ID...">
-                    <button type="submit" class="px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg shadow-md transition-colors text-sm font-medium">Search</button>
+            <form method="GET" action="{% url 'manage_spacific_event' event_id=event.event_id %}" class="space-y-4">
+                <div>
+                    <label for="user_search_query" class="block text-sm font-medium text-gray-700 mb-1">Search Users</label>
+                    <div class="flex space-x-3">
+                        <input type="text" 
+                               name="user_search_query" 
+                               id="user_search_query" 
+                               value="{{ request.GET.user_search_query }}"
+                               class="w-full px-4 py-2.5 border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                               placeholder="Enter name, email, or user ID...">
+                        <button type="submit" class="px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg shadow-md transition-colors text-sm font-medium">
+                            <i class="fas fa-search mr-2"></i>Search
+                        </button>
+                    </div>
+                    {% if messages%}
+                            {% for message in messages%}
+                                <p class="text-red-500">{{ message }}</p>
+                            {% endfor %}
+                    {% endif %}
                 </div>
+                {% if request.GET.user_search_query %}
+                    <div class="text-sm text-gray-500">
+                        Showing results for: "{{ request.GET.user_search_query }}"
+                        <a href="{% url 'manage_spacific_event' event_id=event.event_id %}" class="text-indigo-600 hover:text-indigo-800 ml-2">
+                            <i class="fas fa-times mr-1"></i>Clear search
+                        </a>
+                    </div>
+                {% endif %}
             </form>
         </div>
 
@@ -77,18 +159,40 @@
                 {% for s_user in searched_users %}
                 <div class="bg-white p-4 rounded-lg shadow-sm border flex justify-between items-center">
                     <div>
-                        <p class="font-semibold text-gray-800">{{ s_user.full_name | default:s_user.username }}</p>
+                        <p class="font-semibold text-gray-800">{{ s_user.get_full_name|default:s_user.username }}</p>
                         <p class="text-sm text-gray-500">{{ s_user.email }} (ID: {{ s_user.id }})</p>
                     </div>
                     <div class="flex space-x-2">
-                        <button onclick="openInviteModal('{{ s_user.id }}', '{{ s_user.full_name | default:s_user.username }}', 'participant')" class="px-3 py-1.5 text-xs font-medium text-green-700 bg-green-100 hover:bg-green-200 rounded-md">Invite as Participant</button>
-                        <button onclick="openInviteModal('{{ s_user.id }}', '{{ s_user.full_name | default:s_user.username }}', 'volunteer')" class="px-3 py-1.5 text-xs font-medium text-blue-700 bg-blue-100 hover:bg-blue-200 rounded-md">Invite as Volunteer</button>
+                        <form method="POST" action="{% url 'invite_user' event_id=event.event_id %}" class="inline">
+                            {% csrf_token %}
+                            {{ invite_form.user_id.as_hidden }}
+                            {{ invite_form.role.as_hidden }}
+                            <input type="hidden" name="user_id" value="{{ s_user.id }}">
+                            <input type="hidden" name="role" value="PARTICIPANT">
+                            <button type="submit" class="px-3 py-1.5 text-xs font-medium text-green-700 bg-green-100 hover:bg-green-200 rounded-md">
+                                <i class="fas fa-user-plus mr-1"></i>Invite as Participant
+                            </button>
+                        </form>
+                        <form method="POST" action="{% url 'invite_user' event_id=event.event_id %}" class="inline">
+                            {% csrf_token %}
+                            {{ invite_form.user_id.as_hidden }}
+                            {{ invite_form.role.as_hidden }}
+                            <input type="hidden" name="user_id" value="{{ s_user.id }}">
+                            <input type="hidden" name="role" value="VOLUNTEER">
+                            <button type="submit" class="px-3 py-1.5 text-xs font-medium text-blue-700 bg-blue-100 hover:bg-blue-200 rounded-md">
+                                <i class="fas fa-hands-helping mr-1"></i>Invite as Volunteer
+                            </button>
+                        </form>
                     </div>
                 </div>
                 {% endfor %}
             </div>
         {% elif request.GET.user_search_query %}
-            <p class="text-gray-500 bg-white p-4 rounded-lg shadow-sm">No users found matching your search criteria.</p>
+            <div class="bg-white p-4 rounded-lg shadow-sm">
+                <p class="text-gray-500 text-center">
+                    <i class="fas fa-search mr-2"></i>No users found matching your search criteria.
+                </p>
+            </div>
         {% endif %}
     </section>
 
@@ -99,19 +203,23 @@
                 {% for req in pending_requests %}
                 <div class="bg-white p-4 rounded-lg shadow-sm border flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
                     <div>
-                        <p class="font-semibold text-gray-800">{{ req.user.full_name | default:req.user.username }}</p>
+                        <p class="font-semibold text-gray-800">{{ req.user.get_full_name|default:req.user.username }}</p>
                         <p class="text-sm text-gray-500">{{ req.user.email }}</p>
-                        <p class="text-sm mt-1">Wants to join as: <span class="font-medium text-indigo-600">{{ req.role_requested | capfirst }}</span></p>
+                        <p class="text-sm mt-1">Wants to join as: <span class="font-medium text-indigo-600">{{ req.get_role_display }}</span></p>
                         <p class="text-xs text-gray-400 mt-1">Requested on: {{ req.requested_at|date:"M d, Y, P" }}</p>
                     </div>
                     <div class="flex space-x-2 mt-2 sm:mt-0 shrink-0">
                         <form method="POST" action="{% url 'accept_request_url' request_id=req.id %}" class="inline">
                             {% csrf_token %}
-                            <button type="submit" class="px-3 py-1.5 text-xs font-medium text-white bg-green-500 hover:bg-green-600 rounded-md">Accept</button>
+                            <button type="submit" class="px-3 py-1.5 text-xs font-medium text-white bg-green-500 hover:bg-green-600 rounded-md">
+                                <i class="fas fa-check mr-1"></i>Accept
+                            </button>
                         </form>
                         <form method="POST" action="{% url 'reject_request_url' request_id=req.id %}" class="inline">
                             {% csrf_token %}
-                            <button type="submit" class="px-3 py-1.5 text-xs font-medium text-white bg-red-500 hover:bg-red-600 rounded-md">Reject</button>
+                            <button type="submit" class="px-3 py-1.5 text-xs font-medium text-white bg-red-500 hover:bg-red-600 rounded-md">
+                                <i class="fas fa-times mr-1"></i>Reject
+                            </button>
                         </form>
                     </div>
                 </div>
@@ -216,9 +324,9 @@
                     <i class="fas fa-exclamation-triangle fa-2x text-red-600"></i>
                 </div>
                 <h3 class="text-xl font-semibold text-gray-800 mb-2">Delete Event</h3>
-                <p class="text-sm text-gray-500 mb-6">Are you sure you want to delete the event "{{ event.name | default:'this event' }}"? This action cannot be undone.</p>
+                <p class="text-sm text-gray-500 mb-6">Are you sure you want to delete the event "{{ event.title | default:'this event' }}"? This action cannot be undone.</p>
             </div>
-            <form method="POST" action="">
+            <form method="POST" action="{% url 'manager_delete_event' event_id=event.event_id %}">
                 {% csrf_token %}
                 <div class="flex justify-center space-x-4">
                     <button type="button" onclick="closeConfirmDeleteModal()" class="px-6 py-2 text-sm font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg">Cancel</button>
@@ -327,11 +435,5 @@
     });
 </script>
 
-<style>
-/* Additional custom styles if needed */
-.active-tab svg { /* Ensure icon color changes for active tab if not handled by Tailwind directly */
-    color: inherit; 
-}
-</style>
 
 {% endblock %}
