@@ -122,5 +122,61 @@ def add_an_event(request):
     return render(request, 'add_an_event.html', {'categories': categories})
 
 @login_required
-def manage_spacific_event(request):
-    return render(request, 'manage_spacific_event.html')
+def manage_spacific_event(request, event_id):
+    try:
+        event = Event.objects.get(id=event_id)
+        context = {
+            'event': event,
+        }
+        return render(request, 'manage_spacific_event.html', context)
+    except Event.DoesNotExist:
+        messages.error(request, 'Event not found.')
+        return redirect('manager_dashboard')
+
+@login_required
+def manager_update_event(request, event_id):
+    try:
+        event = Event.objects.get(id=event_id)
+        if request.method == 'POST':
+            # Handle event update
+            event.title = request.POST.get('event_name', event.title)
+            event.description = request.POST.get('event_description', event.description)
+            event.date = request.POST.get('event_date', event.date)
+            event.time = request.POST.get('event_time', event.time)
+            event.location = request.POST.get('event_location', event.location)
+            event.visibility = request.POST.get('event_visibility', event.visibility).upper()
+            event.image_url = request.POST.get('event_image_url', event.image_url)
+            event.max_attendees = request.POST.get('max_attendees', event.max_attendees)
+            event.tags = request.POST.get('event_tags', event.tags)
+            
+            # Update category if provided
+            category_name = request.POST.get('event_category')
+            if category_name:
+                category, created = EventCategory.objects.get_or_create(name=category_name)
+                event.category = category
+            
+            event.save()
+            messages.success(request, 'Event updated successfully!')
+            return redirect('manager_dashboard')
+            
+        context = {
+            'event': event,
+            'categories': EventCategory.objects.all()
+        }
+        return render(request, 'update_event.html', context)
+    except Event.DoesNotExist:
+        messages.error(request, 'Event not found.')
+        return redirect('manager_dashboard')
+
+@login_required
+def manager_delete_event(request, event_id):
+    try:
+        event = Event.objects.get(id=event_id)
+        if request.method == 'POST':
+            event.delete()
+            messages.success(request, 'Event deleted successfully!')
+            return redirect('manager_dashboard')
+        return render(request, 'confirm_delete.html', {'event': event})
+    except Event.DoesNotExist:
+        messages.error(request, 'Event not found.')
+        return redirect('manager_dashboard')

@@ -131,6 +131,8 @@ celerybeat.pid
 theme/static/css/dist/
 theme/static/css/src/
 theme/static/css/tailwind.config.js
+tailwind.config.js
+postcss.config.js
 
 # System Files
 Thumbs.db
@@ -153,3 +155,30 @@ lerna-debug.log*
 log/
 tmp/
 temp/
+
+# Django specific
+*.pot
+*.pyc
+local_settings.py
+db.sqlite3
+db.sqlite3-journal
+media/
+staticfiles/
+static/
+
+# Backup files
+*.bak
+*.swp
+*~
+
+# Cache
+.cache/
+__pycache__/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# Distribution
+dist/
+build/
+*.egg-info/
