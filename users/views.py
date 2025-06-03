@@ -8,6 +8,7 @@ from django.db.models import Q
 from .forms import InviteUserForm
 from django.http import JsonResponse
 import logging
+from django.urls import reverse
 
 logger = logging.getLogger(__name__)
 
@@ -174,7 +175,7 @@ def invite_user(request, event_id):
             try:
                 event = Event.objects.get(event_id=event_id)
                 user_to_invite = User.objects.get(id=user_id)
-                
+                print(user_to_invite)
                 # Check if user is already registered
                 existing_registration = EventRegistration.objects.filter(
                     event=event,
@@ -183,11 +184,11 @@ def invite_user(request, event_id):
                 
                 if existing_registration:
                     if existing_registration.status == 'INVITED':
-                        messages.warning(request, f'{user_to_invite.get_full_name()} has already been invited.')
+                        messages.warning(request, f'"{user_to_invite}" has already been invited.')
                     elif existing_registration.status == 'APPROVED':
-                        messages.warning(request, f'{user_to_invite.get_full_name()} is already registered.')
+                        messages.warning(request, f'"{user_to_invite}" is already registered.')
                     else:
-                        messages.warning(request, f'{user_to_invite.get_full_name()} has a pending request.')
+                        messages.warning(request, f'"{user_to_invite}" has a pending request.')
                 else:
                     # Create new registration
                     registration = EventRegistration.objects.create(
@@ -204,10 +205,10 @@ def invite_user(request, event_id):
                         sender=request.user,
                         event=event,
                         notification_type='EVENT_INVITE_PARTICIPANT' if role == 'PARTICIPANT' else 'EVENT_INVITE_VOLUNTEER',
-                        message=f'You have been invited to join {event.title} as a {registration.get_role_display()}.'
+                        message=f'You have invited "{user_to_invite}" to join "{event.title}" as a {registration.get_role_display()}.'
                     )
                     
-                    messages.success(request, f'Successfully invited {user_to_invite.get_full_name()} as a {registration.get_role_display()}.')
+                    messages.success(request, f'Successfully invited "{user_to_invite}" as a {registration.get_role_display()}.')
                 
             except (Event.DoesNotExist, User.DoesNotExist):
                 messages.error(request, 'Invalid event or user.')
@@ -362,11 +363,17 @@ def accept_request(request, request_id):
                 sender=request.user,
                 event=registration.event,
                 notification_type='REQUEST_APPROVED',
-                message=f'Your request to join {registration.event.title} as a {registration.get_role_display()} has been approved.'
+                message=f'You have accepted the request from "{registration.user}" to join "{registration.event.title}" as a {registration.get_role_display()}.'
             )
 
             messages.success(request, 'Request approved successfully.')
-        return redirect('manage_spacific_event', event_id=registration.event.event_id)
+            base_url = reverse('manage_spacific_event', kwargs={'event_id': registration.event.event_id})
+    
+            # ফ্র্যাগমেন্ট যোগ করুন
+            url_with_fragment = f"{base_url}#requests" # এখানে 'requests' হলো আপনার সেকশনের আইডি
+
+        return redirect(url_with_fragment)
+        # return redirect('manage_spacific_event', event_id=registration.event.event_id)
     except EventRegistration.DoesNotExist:
         messages.error(request, 'Request not found.')
         return redirect('manager_dashboard')
@@ -389,8 +396,11 @@ def reject_request(request, request_id):
                 message=f'Your request to join {registration.event.title} as a {registration.get_role_display()} has been rejected.'
             )
 
-            messages.success(request, 'Request rejected successfully.')
-        return redirect('manage_spacific_event', event_id=registration.event.event_id)
+            messages.error(request, 'Request rejected successfully.')
+            base_url = reverse('manage_spacific_event', kwargs={'event_id': registration.event.event_id})
+            url_with_fragment = f"{base_url}#requests"
+        return redirect(url_with_fragment)
+        #return redirect('manage_spacific_event', event_id=registration.event.event_id)
     except EventRegistration.DoesNotExist:
         messages.error(request, 'Request not found.')
         return redirect('manager_dashboard')
@@ -475,7 +485,7 @@ def join_event(request, event_id):
                     sender=request.user,
                     event=event,
                     notification_type='JOIN_REQUEST_PARTICIPANT' if role == 'PARTICIPANT' else 'JOIN_REQUEST_VOLUNTEER',
-                    message=f'{request.user.get_full_name() or request.user.username} wants to join {event.title} as a {registration.get_role_display()}.'
+                    message=f'"{request.user.get_full_name() or request.user.username}" sent a request to join  The "{event.title}" as a {registration.get_role_display()}.'
                 )
                 logger.info(f"Created notification for event creator")
                 

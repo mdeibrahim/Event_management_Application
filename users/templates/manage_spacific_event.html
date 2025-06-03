@@ -34,13 +34,18 @@
                     <i class="fas fa-server mr-1.5 text-indigo-400"></i> Server Time: {{ current_time|date:"F j, Y" }} at {{ current_time|time:"g:i:s A" }}
                 </p>
             </div>
-            <div class="flex space-x-3 mt-4 md:mt-0 shrink-0">
-                <a href="{% url 'manager_update_event' event_id=event.event_id %}" class="inline-flex items-center px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg shadow-md transition-colors duration-200 text-sm">
-                    <i class="fas fa-edit mr-2"></i>Edit Event
-                </a>
-                <button onclick="openConfirmDeleteModal()" class="inline-flex items-center px-4 py-2 bg-red-500 hover:bg-red-600 text-white rounded-lg shadow-md transition-colors duration-200 text-sm">
-                    <i class="fas fa-trash-alt mr-2"></i>Delete Event
-                </button>
+            <div class=" space-x-3 mt-4 md:mt-0 shrink-0 ">
+                <div class="font-semibold " >
+                    <h2 class="text-emerald-700">Event ID:</h2><p>  {{event.event_id}} </p><br><br><br><br>
+                </div>
+                <div class="flex justify-end space-x-3">
+                    <a href="{% url 'manager_update_event' event_id=event.event_id %}" class="inline-flex items-center px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg shadow-md transition-colors duration-200 text-sm">
+                        <i class="fas fa-edit mr-2"></i>Edit Event
+                    </a>
+                    <button onclick="openConfirmDeleteModal()" class="inline-flex items-center px-4 py-2 bg-red-500 hover:bg-red-600 text-white rounded-lg shadow-md transition-colors duration-200 text-sm">
+                        <i class="fas fa-trash-alt mr-2"></i>Delete Event
+                    </button>
+                </div>
             </div>
         </div>
     </div>
@@ -197,6 +202,15 @@
     </section>
 
     <section id="requests" class="event-content-section" style="display: none;">
+        {% if messages %}
+            {% for message in messages %}
+                {% if message.tags == 'error' %}
+                    <p class="text-red-500">{{ message }}</p>
+                {% elif message.tags == 'success' %}
+                    <p class="text-green-500">{{ message }}</p>
+                {% endif %}
+            {% endfor %}
+        {% endif %}
         <h2 class="text-2xl font-semibold text-gray-700 mb-6">Pending Join/Volunteer Requests ({{ pending_requests.count | default:0 }})</h2>
         <div class="space-y-4">
             {% if pending_requests %}
@@ -274,7 +288,7 @@
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ attendee.registered_at|date:"M d, Y" }}</td>
                             <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                                <a href="{% url 'user_profile_url' user_id=attendee.user.id %}" class="text-indigo-600 hover:text-indigo-900 mr-2">View</a>
+                                 <a href="{% comment %}{% url 'user_profile_url' user_id=attendee.user.id %}{% endcomment %}" class="text-indigo-600 hover:text-indigo-900 mr-2">View</a> 
                                 </td>
                         </tr>
                         {% endfor %}
