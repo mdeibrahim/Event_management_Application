@@ -86,7 +86,7 @@ class Event(models.Model):
     visibility = models.CharField(max_length=10, choices=VISIBILITY_CHOICES, default='PUBLIC')
     secret_code = models.CharField(max_length=50, blank=True, null=True, unique=True) # For private events
     
-    image_url = models.URLField(max_length=500, blank=True, null=True) # Or use ImageField
+    event_cover = models.ImageField(upload_to='images/', blank=True, null=True) # Or use ImageField
     max_attendees = models.PositiveIntegerField(blank=True, null=True) # Optional
     tags = models.CharField(max_length=255, blank=True, null=True) # e.g., "tech,python,django"
 
@@ -105,6 +105,7 @@ class Event(models.Model):
 
 class EventRegistration(models.Model):
     ROLE_CHOICES = [
+        ('MANAGER', 'Manager'),
         ('PARTICIPANT', 'Participant'),
         ('VOLUNTEER', 'Volunteer'),
     ]
@@ -125,12 +126,10 @@ class EventRegistration(models.Model):
     invited_at = models.DateTimeField(null=True, blank=True) # Timestamp when user is invited (for this specific role)
     processed_at = models.DateTimeField(null=True, blank=True) # Timestamp when status changes (approved, rejected etc.)
     
-    attended = models.BooleanField(default=False) # For tracking actual attendance
+    # attended = models.BooleanField(default=False) # For tracking actual attendance
 
     class Meta:
-        unique_together = ('user', 'event', 'role') # A user can be a participant OR a volunteer for an event, not both simultaneously with this constraint. If they can be both, remove this.
-                                                   # Or, if a user can request both roles and one gets approved, this needs careful handling.
-                                                   # For simplicity, assume one primary role (Participant/Volunteer) per event per user via registration.
+        unique_together = ('user', 'event', 'role')
 
     def __str__(self):
         return f"{self.user.username} - {self.event.title} as {self.get_role_display()}"
@@ -140,8 +139,11 @@ class Notification(models.Model):
         ('EVENT_INVITE_PARTICIPANT', 'Event Invitation (Participant)'),
         ('EVENT_INVITE_VOLUNTEER', 'Event Invitation (Volunteer)'),
         ('EVENT_INVITE_MANAGER', 'Event Invitation (Manager)'), # This would trigger adding to Event.managers
+        
+        ('JOIN_REQUEST_MANAGER', 'Join Request (Manager)'),
         ('JOIN_REQUEST_PARTICIPANT', 'Join Request (Participant)'),
         ('JOIN_REQUEST_VOLUNTEER', 'Join Request (Volunteer)'),
+
         ('REQUEST_APPROVED', 'Request Approved'),
         ('REQUEST_REJECTED', 'Request Rejected'),
         ('INVITE_ACCEPTED', 'Invitation Accepted'), # User accepted Participant/Volunteer invite

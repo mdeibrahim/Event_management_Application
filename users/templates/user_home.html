@@ -96,14 +96,14 @@
                         My Attended Events
                     </h2>
                     <div class="max-h-[500px] overflow-y-auto pr-3 custom-scrollbar">
-                        {% for i in "12" %}
+                        {% for activity in my_activities %}
                         <div class="p-4 bg-gray-50 rounded-lg mb-3 hover:bg-emerald-50 transition-all duration-200 border border-transparent hover:border-emerald-200">
                             <div class="flex justify-between items-start">
                                 <div>
-                                    <h3 class="font-semibold text-sky-700 text-lg">Community Charity Run - Event {{ i }}</h3>
-                                    <p class="text-sm text-gray-600 mt-1"><i class="fas fa-map-marker-alt mr-2 text-sky-500"></i> Central Park Loop</p>
-                                    <p class="text-sm text-gray-600 mt-1"><i class="fas fa-clock mr-2 text-sky-500"></i> September 5, 2025</p>
-                                    <p class="text-xs text-gray-500 mt-2">Role: <span class="font-semibold px-2 py-0.5 rounded-full {% if i == '1' %}bg-green-100 text-green-700{% else %}bg-blue-100 text-blue-700{% endif %}">{% if i == "1" %}Volunteer{% else %}Participant{% endif %}</span></p>
+                                    <h3 class="font-semibold text-sky-700 text-lg">{{activity.event.title }}</h3>
+                                    <p class="text-sm text-gray-600 mt-1"><i class="fas fa-map-marker-alt mr-2 text-sky-500"></i> {{activity.event.location}}</p>
+                                    <p class="text-sm text-gray-600 mt-1"><i class="fas fa-clock mr-2 text-sky-500"></i> {{activity.event.date}}</p>
+                                    <p class="text-xs text-gray-500 mt-2">Role: <span class="font-semibold px-2 py-0.5 rounded-full {% if activity.role == 'VOLUNTEER' %}bg-green-100 text-green-700{% else %}bg-blue-100 text-blue-700{% endif %}">{% if activity.role == "VOLUNTEER" %}Volunteer{% else %}Participant{% endif %}</span></p>
                                 </div>
                                 <a href="#" class="bg-transparent hover:bg-sky-50 text-sky-600 font-semibold py-2 px-3 border border-sky-500 rounded-lg hover:text-sky-700 transition-all duration-200 text-xs hover:scale-[1.02] active:scale-[0.98]">
                                     <i class="fas fa-info-circle mr-1"></i> View Details

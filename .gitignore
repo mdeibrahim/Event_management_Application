@@ -85,7 +85,7 @@ yarn.lock
 .node_repl_history
 .yarn-integrity
 
-# Coverage reports
+# Testing and Coverage
 htmlcov/
 .tox/
 .coverage
@@ -96,14 +96,8 @@ coverage.xml
 *.cover
 .hypothesis/
 .pytest_cache/
-
-# Translations
-*.mo
-*.pot
-
-# Celery
-celerybeat-schedule
-celerybeat.pid
+.mypy_cache/
+.ruff_cache/
 
 # Database
 *.sqlite3
@@ -143,7 +137,7 @@ desktop.ini
 *.seed
 *.pid.lock
 
-# Logs
+# Logs and Temporary Files
 logs/
 *.log
 npm-debug.log*
@@ -155,124 +149,3 @@ lerna-debug.log*
 log/
 tmp/
 temp/
-
-# Django specific
-*.pot
-*.pyc
-local_settings.py
-db.sqlite3
-db.sqlite3-journal
-media/
-staticfiles/
-static/
-
-# Backup files
-*.bak
-*.swp
-*~
-
-# Cache
-.cache/
-__pycache__/
-.pytest_cache/
-.mypy_cache/
-.ruff_cache/
-
-# Distribution
-dist/
-build/
-*.egg-info/
-
-# Additional Django patterns
-*.pyc
-*.pyo
-*.pyd
-.Python
-*.manifest
-*.spec
-*.pot
-*.mo
-celerybeat-schedule
-celerybeat.pid
-*.sqlite3
-*.sqlite3-journal
-media/
-staticfiles/
-static/
-local_settings.py
-db.sqlite3
-db.sqlite3-journal
-
-# Additional development patterns
-*.swp
-*.swo
-*~
-*.bak
-*.tmp
-*.temp
-*.log.*
-*.pid
-*.seed
-*.pid.lock
-*.log
-logs/
-tmp/
-temp/
-.cache/
-__pycache__/
-.pytest_cache/
-.mypy_cache/
-.ruff_cache/
-.coverage
-.coverage.*
-htmlcov/
-.tox/
-nosetests.xml
-coverage.xml
-*.cover
-.hypothesis/
-
-# Additional IDE patterns
-.idea/
-.vscode/
-*.sublime-workspace
-*.sublime-project
-*.code-workspace
-.project
-.pydevproject
-.settings/
-*.tmproj
-*.esproj
-nbproject/
-_private/
-.atom/
-.buildlog/
-.history
-.svn/
-migrate_working_dir/
-
-# Additional environment patterns
-.env
-.env.local
-.env.*.local
-.env.development
-.env.test
-.env.production
-.env.development.local
-.env.test.local
-.env.production.local
-venv/
-env/
-ENV/
-.venv
-event_management_env/
-pythonenv*/
-.python-version
-
-# Additional build patterns
-build/
-dist/
-*.egg-info/
-.installed.cfg
-*.egg
-MANIFEST
