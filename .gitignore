@@ -20,14 +20,6 @@ wheels/
 .installed.cfg
 *.egg
 MANIFEST
-.pytest_cache/
-.coverage
-htmlcov/
-.tox/
-.nox/
-.hypothesis/
-.pytest_cache/
-cover/
 *.mo
 *.pot
 *.log
@@ -36,24 +28,12 @@ db.sqlite3
 db.sqlite3-journal
 
 # Django
-*.log
-local_settings.py
-db.sqlite3
-db.sqlite3-journal
 staticfiles/
 static/*
 !static/.gitkeep
 media/*
 !media/.gitkeep
 !media/images/.gitkeep
-*.pyc
-*.pyo
-*.pyd
-.Python
-*.manifest
-*.spec
-*.pot
-*.mo
 celerybeat-schedule
 celerybeat.pid
 migrations/*
@@ -119,7 +99,6 @@ coverage.xml
 .pytest_cache/
 .mypy_cache/
 .ruff_cache/
-.pytest_cache/
 cover/
 
 # Database
