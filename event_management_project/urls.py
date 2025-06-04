@@ -28,3 +28,6 @@ urlpatterns = [
     path('verify-email/<str:token>/', views.verify_email, name='verify_email'),
     path("__reload__/", include("django_browser_reload.urls")),  # Re-enabled for auto-reloading
 ] 
+
+if settings.DEBUG:
+    urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT) 

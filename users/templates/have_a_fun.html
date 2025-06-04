@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>A Mysterious Portal!</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Creepster&family=Roboto:wght@300;400;700&display=swap" rel="stylesheet">
+    <!-- Font Awesome CDN for icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" xintegrity="sha512-9usAa10IRO0HhonpyAIVpjrylPvoDwiPUiKdWk5t3PyolY1cOd4DSE0Ga+ri4AuTroPR5aQvXU9xC6qOPnzFeg==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.8.32/Tone.js"></script> <!-- Tone.js for sound -->
+
+    <style>
+        body {
+            font-family: 'Roboto', sans-serif;
+            overflow: hidden; /* Prevent scrollbars from glitchy animations */
+        }
+        .creepster-font {
+            font-family: 'Creepster', cursive;
+        }
+        .door-container {
+            perspective: 1000px;
+        }
+        .door {
+            width: 200px;
+            height: 300px;
+            background-color: #4a3b31; /* Dark wood color */
+            border: 10px solid #30241e; /* Darker wood border */
+            border-radius: 10px 10px 0 0;
+            position: relative;
+            transform-style: preserve-3d;
+            transition: transform 0.8s cubic-bezier(0.68, -0.55, 0.27, 1.55); /* More dynamic transition */
+            cursor: pointer;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+        }
+        .door:hover {
+            transform: translateX(-2%) rotateY(-25deg) scale(1.03);
+        }
+        .door.clicked { /* Style for when door is clicked */
+            transform: translateX(-10%) rotateY(-45deg) scale(1.1) !important;
+        }
+        .door-handle {
+            position: absolute;
+            top: 50%;
+            left: 20px;
+            width: 20px;
+            height: 20px;
+            background-color: #c0c0c0; /* Silver */
+            border-radius: 50%;
+            transform: translateY(-50%);
+            box-shadow: 0 0 5px rgba(0,0,0,0.7);
+        }
+        .door-hinge {
+            position: absolute;
+            right: -10px; /* Attached to the border */
+            width: 15px;
+            height: 50px;
+            background-color: #706f6f; /* Dark metal */
+            border-radius: 3px;
+        }
+        .hinge-top { top: 30px; }
+        .hinge-bottom { bottom: 30px; }
+
+        .glow {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 350px; /* Slightly larger */
+            height: 450px; /* Slightly larger */
+            background: radial-gradient(ellipse at center, 
+                rgba(140, 0, 200, 0.7) 0%,  /* Brighter purple */
+                rgba(255, 20, 147, 0.5) 35%, /* Deep pink */
+                rgba(255, 105, 180, 0.3) 65%, /* Hot pink */
+                rgba(75, 0, 130, 0) 100%    /* Transparent outer */
+            );
+            border-radius: 50%;
+            transform: translate(-50%, -50%) scale(0);
+            animation: pulse-glow 3.5s infinite ease-in-out, reveal-glow 1.5s 0.5s forwards;
+            filter: blur(20px); /* More blur */
+            z-index: -1; 
+        }
+
+        @keyframes pulse-glow {
+            0%, 100% { opacity: 0.5; transform: translate(-50%, -50%) scale(0.95); }
+            50% { opacity: 0.9; transform: translate(-50%, -50%) scale(1.15); }
+        }
+        
+        @keyframes reveal-glow {
+            from { transform: translate(-50%, -50%) scale(0); opacity: 0; }
+            to { transform: translate(-50%, -50%) scale(1); opacity: 0.7; }
+        }
+
+        .stars {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: -2;
+        }
+        .star {
+            position: absolute;
+            background-color: white;
+            border-radius: 50%;
+            animation: twinkle 2s infinite ease-in-out;
+        }
+        @keyframes twinkle {
+            0%, 100% { opacity: 0.3; }
+            50% { opacity: 0.9; }
+        }
+
+        .btn-explore {
+            background-image: linear-gradient(to right, #6d28d9, #be185d); 
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+        }
+        .btn-explore:hover {
+            background-image: linear-gradient(to right, #5b21b6, #9d174d);
+            transform: translateY(-2px) scale(1.02);
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
+        }
+        .btn-explore:active {
+            transform: translateY(0px) scale(0.98);
+        }
+
+    </style>
+</head>
+<body class="bg-slate-900 text-slate-200 flex flex-col items-center justify-center min-h-screen p-6">
+
+    <div class="stars" id="stars-container"></div>
+    <div class="glow"></div>
+
+    <div class="text-center z-10 max-w-2xl">
+        <h1 class="creepster-font text-6xl sm:text-7xl md:text-8xl text-purple-400 mb-6 tracking-wider animate-pulse">
+            Beyond This Portal...
+        </h1>
+        
+        <p class="text-xl sm:text-2xl text-slate-300 mb-4 leading-relaxed">
+            Ah, a curious traveler! You've stumbled upon a rather... <em class="text-pink-400 font-semibold">exclusive</em> gateway.
+        </p>
+        <p class="text-md sm:text-lg text-slate-400 mb-8 leading-relaxed">
+            This particular portal, you see, only yields to those who whisper the <strong class="text-orange-400">secret incantation</strong> 
+            (or, between us, possess the correct digital credentials). What wonders, horrors, or unspeakable truths lie beyond? 
+            That remains a mystery... for now.
+        </p>
+
+        <div class="door-container my-10 flex justify-center">
+            <div class="door" id="mysteriousDoor">
+                <div class="door-handle"></div>
+                <div class="door-hinge hinge-top"></div>
+                <div class="door-hinge hinge-bottom"></div>
+            </div>
+        </div>
+        
+        <p class="text-sm text-slate-500 mb-8 italic">
+            (Psst... the door seems sealed by ancient magic. Only the authorized may truly pass!)
+        </p>
+
+        <div>
+            <a href="{% url 'public_home' %}" 
+               class="btn-explore inline-flex items-center text-white font-bold py-3 px-8 rounded-lg text-lg shadow-lg hover:shadow-xl transition-all duration-300 ease-in-out">
+                <i class="fas fa-compass mr-2"></i> Explore Known Territories
+            </a>
+        </div>
+    </div>
+
+    <script>
+        // Star generation
+        const starsContainer = document.getElementById('stars-container');
+        const numberOfStars = 120; // Increased star count
+
+        for (let i = 0; i < numberOfStars; i++) {
+            const star = document.createElement('div');
+            star.classList.add('star');
+            const size = Math.random() * 2.5 + 0.5; // Star size between 0.5px and 3px
+            star.style.width = `${size}px`;
+            star.style.height = `${size}px`;
+            star.style.top = `${Math.random() * 100}%`;
+            star.style.left = `${Math.random() * 100}%`;
+            star.style.animationDelay = `${Math.random() * 3}s`; 
+            star.style.animationDuration = `${Math.random() * 2.5 + 1.5}s`; 
+            starsContainer.appendChild(star);
+        }
+
+        // Door interaction with sound
+        const door = document.getElementById('mysteriousDoor');
+        let creakSound; // Declare globally to ensure it's loaded
+
+        // Initialize Tone.js and creaking sound synth
+        // This is best done after a user interaction if autoplay policies are strict
+        // but for this demo, we'll try to initialize it early.
+        async function initializeAudio() {
+            if (typeof Tone !== 'undefined' && Tone.context.state !== 'running') {
+                await Tone.start(); // Request to start audio context
+                console.log("AudioContext started by Tone.js");
+            }
+            
+            // Simple creak sound using a noise synth and filter
+            creakSound = new Tone.NoiseSynth({
+                noise: { type: 'brown' },
+                envelope: { attack: 0.1, decay: 0.3, sustain: 0, release: 0.2 }
+            }).toDestination();
+            
+            const filter = new Tone.Filter(200, "lowpass").toDestination(); // Lowpass filter for creak
+            creakSound.connect(filter);
+        }
+        initializeAudio();
+
+
+        if (door) {
+            door.addEventListener('click', async () => {
+                if (typeof Tone === 'undefined') {
+                    console.warn("Tone.js is not loaded. Sound effects will not play.");
+                    // Fallback visual effect without sound
+                    door.classList.add('clicked');
+                    setTimeout(() => {
+                        door.classList.remove('clicked');
+                        // Return to hover state (or default if not hovering)
+                        if (!door.matches(':hover')) {
+                             door.style.transform = 'translateX(0) rotateY(0) scale(1)';
+                        } else {
+                            door.style.transform = 'translateX(-2%) rotateY(-25deg) scale(1.03)';
+                        }
+                    }, 800); // Match transition duration
+                    return;
+                }
+
+                // Ensure audio context is running (important for some browsers)
+                if (Tone.context.state !== 'running') {
+                    await Tone.start();
+                }
+
+                // Play creak sound
+                if (creakSound) {
+                    creakSound.triggerAttackRelease("8n"); // "8n" is a short duration
+                }
+                
+                // Visual effect
+                door.classList.add('clicked');
+                
+                setTimeout(() => {
+                    door.classList.remove('clicked');
+                    // Return to hover state (or default if not hovering)
+                    // Check if the mouse is still over the door to return to hover state
+                    if (!door.matches(':hover')) {
+                         door.style.transform = 'translateX(0) rotateY(0) scale(1)';
+                    } else {
+                         // Re-apply hover transform if still hovering
+                         door.style.transform = 'translateX(-2%) rotateY(-25deg) scale(1.03)';
+                    }
+                }, 800); // Match the transition duration in CSS
+            });
+        }
+    </script>
+</body>
+</html>

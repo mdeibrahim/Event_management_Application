@@ -4,6 +4,7 @@ from django.conf import settings
 from django.conf.urls.static import static
 
 urlpatterns = [    
+    # path('admin_home/', views.admin_home, name='admin_home'),
     path('admin_dashboard/', views.admin_dashboard, name='admin_dashboard'),
     path('user_home/',views.user_home,name='user_home'),
     path('manager_dashboard/',views.manager_dashboard,name='manager_dashboard'),
@@ -18,5 +19,6 @@ urlpatterns = [
     path('join_event/<uuid:event_id>/', views.join_event, name='join_event'),
     path('accept_invitation/<uuid:event_id>/', views.accept_invitation, name='accept_invitation'),
     path('decline_invitation/<uuid:event_id>/', views.decline_invitation, name='decline_invitation'),
+    path('have_a_fun',views.have_a_fun,name='have_a_fun')
 ]+ static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
 

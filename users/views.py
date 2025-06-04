@@ -12,6 +12,7 @@ from django.urls import reverse
 from users.forms import EventForm,EventUpdateForm
 from uuid import UUID
 
+
 logger = logging.getLogger(__name__)
 
 def is_event_running(event_date, event_time):
@@ -43,12 +44,25 @@ def get_filtered_events(user_events, request):
 
 # Create your views here.
 
+def have_a_fun(request):
+    return render(request, 'have_a_fun.html')
+
+# @login_required
+# def admin_home(request):
+#     return render(request, 'admin/admin_user_home.html')
+
 @login_required
 def admin_dashboard(request):
-    return render(request, 'admin/admin_home.html')
+    if not request.user.is_superuser:
+        return redirect('have_a_fun')
+    return render(request, 'admin/admin_dashboard_home.html')
 
 @login_required
 def user_home(request):
+    user_type="General"
+    if request.user.is_superuser:
+        user_type="Super_user"
+
     # Get events for the current user
     system_events = Event.objects.all()
     user_events = Event.objects.filter(creator=request.user)
@@ -83,6 +97,7 @@ def user_home(request):
         })
     
     context = {
+        'user_type':user_type,
         'my_activities': activities_with_roles,
         'user_events': user_events,
         'system_events': system_events,
@@ -264,7 +279,7 @@ def add_an_event(request):
                 location=event_location,
                 tags=event_tags,
                 visibility=event_visibility.upper(),  # Convert to uppercase to match choices
-                event_cover=request.FILES.get('event_cover'),
+                event_cover=event_cover,
                 max_attendees=max_attendees if max_attendees else None,
                 category=category,
                 creator=request.user  # Set the creator to the current user
@@ -362,10 +377,32 @@ def manage_spacific_event(request, event_id):
         ).order_by('-timestamp')
 
         # Get event attendees (both participants and volunteers)
-        event_attendees = EventRegistration.objects.filter(
+        volunteers = EventRegistration.objects.filter(
             event=event,
+            role='VOLUNTEER',
             status='APPROVED'
         ).select_related('user')
+        
+        participants = EventRegistration.objects.filter(
+            event=event,
+            role='PARTICIPANT',
+            status='APPROVED'
+        ).select_related('user')
+
+        # Get user's registration for this event
+        user_registration = EventRegistration.objects.filter(
+            event=event,
+            user=request.user,
+            status='APPROVED'
+        ).first()
+
+        # Check if user is an approved volunteer for this event
+        is_volunteer = EventRegistration.objects.filter(
+            event=event,
+            user=request.user,
+            role='VOLUNTEER',
+            status='APPROVED'
+        ).exists()
 
         # Handle user search with improved query
         searched_users = None
@@ -410,9 +447,12 @@ def manage_spacific_event(request, event_id):
             'is_running': is_event_running(event.date, event.time),
             'pending_requests': pending_requests,
             'notifications_list': notifications_list,
-            'event_attendees': event_attendees,
+            'volunteers': volunteers,
+            'participants': participants,
             'searched_users': searched_users,
             'invite_form': invite_form,
+            'user_registration': user_registration,
+            'is_volunteer': is_volunteer,
         }
         return render(request, 'manage_spacific_event.html', context)
     except Event.DoesNotExist:
@@ -459,7 +499,7 @@ def manager_delete_event(request, event_id):
             event.delete()
             messages.success(request, 'Event deleted successfully!')
             return redirect('manager_dashboard')
-        return render(request, 'confirm_delete.html', {'event': event})
+        return redirect('manage_spacific_event', event_id=event_id)
     except Event.DoesNotExist:
         messages.error(request, 'Event not found.')
         return redirect('manager_dashboard')

@@ -178,11 +178,25 @@
 
         <div class="flex-1 flex flex-col md:ml-64 transition-all duration-300 ease-in-out">
             <header class="bg-white shadow-md p-4 flex justify-between items-center sticky top-0 z-20">
+                
                 <div>
                     <button class="text-gray-600 hover:text-emerald-600 md:hidden" id="openSidebarButton">
                         <i class="fas fa-bars text-xl"></i>
                     </button>
-                    <h1 class="text-xl font-semibold text-emerald-800 hidden md:block">{% block page_title %}Dashboard Overview{% endblock %}</h1>
+                    <h1 class="text-xl font-semibold text-emerald-800 hidden md:block">Welcome To Admin Dashboard</h1>
+                </div>
+                <div class="flex font-bold text-emerald-600">
+                    <a href="{% url 'user_home' %}">
+                        <div class="hover:bg-emerald-100 rounded-full">
+                            <p class="px-4 py-1">Home</p>
+                        </div>
+                    </a>
+                    <a href="{% url 'manager_dashboard' %}">
+                        <div class="hover:bg-emerald-100 rounded-full">
+                            <p class="px-4 py-1">Manage Dashboard</p>
+                        </div>
+                    </a>
+                    
                 </div>
                 <div class="flex items-center space-x-4">
                     <button class="text-gray-500 hover:text-emerald-600">
@@ -200,7 +214,7 @@
             <div class="flex-1 overflow-y-auto">
                 <main class="p-6">
                     {% block admin_content %}
-                    <p>Welcome to the EventPro Admin Dashboard. Select an option from the sidebar to get started.</p>
+                    
                     {% endblock %}
                 </main>
 

@@ -72,19 +72,19 @@
                     <div class="bg-white p-4 rounded-lg shadow-md grid grid-cols-12 gap-4 items-center flex-grow">
                         
                             <div class="col-span-12 md:col-span-3 font-medium text-sm text-gray-600">{{ event.title }}</div>
-                            <div class="col-span-12 md:col-span-2 font-medium text-sm text-gray-600">{{ event.organizer }}</div>
+                            <div class="col-span-12 md:col-span-2 font-medium text-sm text-gray-600">{{ event.creator.username }}</div>
                             <div class="col-span-12 md:col-span-2 font-medium text-sm text-gray-600">{{ event.category.name }}</div>
                             <div class="col-span-12 md:col-span-2 font-medium text-sm text-gray-600 text-center">{{ event.date|date:"F d, Y" }}</div>
                             <div class="col-span-12 md:col-span-3 font-medium text-sm text-gray-600">{{ event.location }}</div>
                         
                     </div></a>
-                    <div class="flex space-x-2">
-                        <a href="{% url 'manager_update_event' event_id=event.event_id %}" class="p-2 bg-blue-100 hover:bg-blue-200 text-blue-600 rounded-md transition-colors duration-200" title="Edit Event">
+                    <div class="flex space-x-2 px-4 gap-1">
+                        <a href="{% url 'manager_update_event' event_id=event.event_id %}" class="p-3 bg-blue-100 hover:bg-blue-200 text-blue-600 rounded-md transition-colors duration-200" title="Edit Event">
                             <i class="fas fa-edit"></i>
                         </a>
-                        <a href="{% url 'manager_delete_event' event_id=event.event_id %}" class="p-2 bg-red-100 hover:bg-red-200 text-red-600 rounded-md transition-colors duration-200" title="Delete Event">
+                        <button onclick="openDeleteModal('{{ event.event_id }}', '{{ event.title }}')" class="p-3 bg-red-100 hover:bg-red-200 text-red-600 rounded-md transition-colors duration-200" title="Delete Event">
                             <i class="fas fa-trash-alt"></i>
-                        </a>
+                        </button>
                     </div>
                 </div>
                 
@@ -103,4 +103,58 @@
         </div>
     </section>
 </main>
+
+<!-- Delete Confirmation Modal -->
+<div id="deleteModal" class="fixed inset-0 bg-gray-900 bg-opacity-75 z-50 hidden">
+    <div class="flex items-center justify-center min-h-screen p-4">
+        <div class="bg-white p-6 md:p-8 rounded-xl shadow-2xl w-full max-w-md transform transition-all duration-300 scale-95 opacity-0" id="deleteModalContent">
+            <div class="text-center">
+                <div class="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-red-100 mb-4">
+                    <i class="fas fa-exclamation-triangle fa-2x text-red-600"></i>
+                </div>
+                <h3 class="text-xl font-semibold text-gray-800 mb-2">Delete Event</h3>
+                <p class="text-sm text-gray-500 mb-6">Are you sure you want to delete the event "<span id="eventTitleToDelete"></span>"? This action cannot be undone.</p>
+            </div>
+            <form id="deleteEventForm" method="POST" action="">
+                {% csrf_token %}
+                <div class="flex justify-center space-x-4">
+                    <button type="button" onclick="closeDeleteModal()" class="px-6 py-2 text-sm font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg">Cancel</button>
+                    <button type="submit" class="px-6 py-2 text-sm font-medium text-white bg-red-600 hover:bg-red-700 rounded-lg">Yes, Delete</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+    const deleteModal = document.getElementById('deleteModal');
+    const deleteModalContent = document.getElementById('deleteModalContent');
+    const deleteEventForm = document.getElementById('deleteEventForm');
+    const eventTitleToDelete = document.getElementById('eventTitleToDelete');
+
+    function openDeleteModal(eventId, eventTitle) {
+        eventTitleToDelete.textContent = eventTitle;
+        deleteEventForm.action = `/users/manager_delete_event/${eventId}/`;
+        deleteModal.classList.remove('hidden');
+        setTimeout(() => {
+            deleteModalContent.classList.remove('scale-95', 'opacity-0');
+            deleteModalContent.classList.add('scale-100', 'opacity-100');
+        }, 50);
+    }
+
+    function closeDeleteModal() {
+        deleteModalContent.classList.add('scale-95', 'opacity-0');
+        deleteModalContent.classList.remove('scale-100', 'opacity-100');
+        setTimeout(() => {
+            deleteModal.classList.add('hidden');
+        }, 300);
+    }
+
+    // Close modal with Escape key
+    document.addEventListener('keydown', function (event) {
+        if (event.key === 'Escape' && !deleteModal.classList.contains('hidden')) {
+            closeDeleteModal();
+        }
+    });
+</script>
 {% endblock %}
