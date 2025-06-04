@@ -9,6 +9,8 @@ from .forms import InviteUserForm
 from django.http import JsonResponse
 import logging
 from django.urls import reverse
+from users.forms import EventForm,EventUpdateForm
+from uuid import UUID
 
 logger = logging.getLogger(__name__)
 
@@ -59,8 +61,29 @@ def user_home(request):
     notifications = Notification.objects.filter(
         recipient=request.user
     ).order_by('-timestamp')[:10]  # Get last 10 notifications
+
+    # My attended events
+    my_activities = Event.objects.filter(
+        registrations__user=request.user,
+        registrations__role__in=['VOLUNTEER', 'PARTICIPANT'],
+        registrations__status='APPROVED'
+    ).distinct()
+
+    # Get role information for each activity
+    activities_with_roles = []
+    for activity in my_activities:
+        registration = EventRegistration.objects.filter(
+            event=activity,
+            user=request.user,
+            status='APPROVED'
+        ).first()
+        activities_with_roles.append({
+            'event': activity,
+            'role': registration.role if registration else None
+        })
     
     context = {
+        'my_activities': activities_with_roles,
         'user_events': user_events,
         'system_events': system_events,
         'public_events': public_events,
@@ -75,7 +98,7 @@ def manager_dashboard(request):
     events = Event.objects.all()
     
     # Get events for the current user
-    user_events = Event.objects.filter(creator=request.user)
+    user_events = Event.objects.filter(Q(creator=request.user) | Q(managers=request.user))
     user_total_events = user_events
     
     # Get upcoming events (events with dates in the future)
@@ -109,7 +132,103 @@ def manager_dashboard(request):
 
 @login_required
 def user_activity(request):
-    return render(request, 'user_activity.html')
+    # Get all events
+    events = Event.objects.all()
+    
+    # Get events where user is a manager
+    as_a_manager = Event.objects.filter(managers=request.user)
+    
+    # Get events where user is a volunteer through EventRegistration
+    as_a_volunteer = Event.objects.filter(
+        registrations__user=request.user,
+        registrations__role='VOLUNTEER',
+        registrations__status='APPROVED'
+    )
+    
+    # Get events where user is a participant through EventRegistration
+    as_a_participant = Event.objects.filter(
+        registrations__user=request.user,
+        registrations__role='PARTICIPANT',
+        registrations__status='APPROVED'
+    )
+
+    # Get the activity type from request
+    activity_type = request.GET.get('type', 'all')
+    activity_title = "Today's Activities"  # Default title
+
+    # Filter events based on activity type
+    if activity_type == 'manager':
+        filtered_events = as_a_manager
+        activity_title = "Manager Activities"
+    elif activity_type == 'volunteer':
+        filtered_events = as_a_volunteer
+        activity_title = "Volunteer Activities"
+    elif activity_type == 'participant':
+        filtered_events = as_a_participant
+        activity_title = "Participant Activities"
+    elif activity_type == 'upcoming':
+        # Combine and filter for upcoming events
+        filtered_events = Event.objects.filter(
+            Q(id__in=as_a_manager.values_list('id', flat=True)) |
+            Q(id__in=as_a_volunteer.values_list('id', flat=True)) |
+            Q(id__in=as_a_participant.values_list('id', flat=True)),
+            date__gte=timezone.now().date()
+        )
+        activity_title = "Upcoming Activities"
+    elif activity_type == 'past':
+        # Combine and filter for past events
+        filtered_events = Event.objects.filter(
+            Q(id__in=as_a_manager.values_list('id', flat=True)) |
+            Q(id__in=as_a_volunteer.values_list('id', flat=True)) |
+            Q(id__in=as_a_participant.values_list('id', flat=True)),
+            date__lt=timezone.now().date()
+        )
+        activity_title = "Past Activities"
+    else:
+        # Combine and filter for today's events
+        filtered_events = Event.objects.filter(
+            Q(id__in=as_a_manager.values_list('id', flat=True)) |
+            Q(id__in=as_a_volunteer.values_list('id', flat=True)) |
+            Q(id__in=as_a_participant.values_list('id', flat=True)),
+            date=timezone.now().date()
+        )
+        activity_title = "Today's Activities"
+
+    # Get registration information for each event
+    events_with_roles = []
+    for event in filtered_events:
+        role = None
+        if event in as_a_manager:
+            role = 'MANAGER'
+        else:
+            registration = EventRegistration.objects.filter(
+                event=event,
+                user=request.user,
+                status='APPROVED'
+            ).first()
+            if registration:
+                role = registration.role
+        events_with_roles.append({
+            'event': event,
+            'role': role
+        })
+
+    context = {
+        'events': filtered_events,
+        'events_with_roles': events_with_roles,
+        'activity_title': activity_title,
+        'activity_type': activity_type,
+        'filtered_events': filtered_events.count(),
+        'filtered_events_list': events_with_roles,
+        'as_a_manager': as_a_manager.count(),
+        'as_a_volunteer': as_a_volunteer.count(),
+        'as_a_participant': as_a_participant.count(),
+        'manager_count': as_a_manager,
+        'volunteer_count': as_a_volunteer,
+        'participant_count': as_a_participant,
+    }
+
+    return render(request, 'user_activity.html', context)
 
 @login_required
 def add_an_event(request):
@@ -125,7 +244,7 @@ def add_an_event(request):
             event_location = request.POST.get('event_location')
             event_tags = request.POST.get('event_tags')
             event_visibility = request.POST.get('event_visibility')
-            event_image_url = request.POST.get('event_image_url')
+            event_cover = request.FILES.get('event_cover')
             max_attendees = request.POST.get('max_attendees')
 
             # Validate required fields
@@ -145,7 +264,7 @@ def add_an_event(request):
                 location=event_location,
                 tags=event_tags,
                 visibility=event_visibility.upper(),  # Convert to uppercase to match choices
-                image_url=event_image_url,
+                event_cover=request.FILES.get('event_cover'),
                 max_attendees=max_attendees if max_attendees else None,
                 category=category,
                 creator=request.user  # Set the creator to the current user
@@ -299,41 +418,38 @@ def manage_spacific_event(request, event_id):
     except Event.DoesNotExist:
         messages.error(request, 'Event not found.')
         return redirect('manager_dashboard')
+    
 
 @login_required
 def manager_update_event(request, event_id):
     try:
         event = Event.objects.get(event_id=event_id)
-        if request.method == 'POST':
-            # Handle event update
-            event.title = request.POST.get('event_name', event.title)
-            event.description = request.POST.get('event_description', event.description)
-            event.date = request.POST.get('event_date', event.date)
-            event.time = request.POST.get('event_time', event.time)
-            event.location = request.POST.get('event_location', event.location)
-            event.visibility = request.POST.get('event_visibility', event.visibility).upper()
-            event.image_url = request.POST.get('event_image_url', event.image_url)
-            event.max_attendees = request.POST.get('max_attendees', event.max_attendees)
-            event.tags = request.POST.get('event_tags', event.tags)
-            
-            # Update category if provided
-            category_name = request.POST.get('event_category')
-            if category_name:
-                category, created = EventCategory.objects.get_or_create(name=category_name)
-                event.category = category
-            
-            event.save()
-            messages.success(request, 'Event updated successfully!')
+        if request.user != event.creator and request.user not in event.managers.all():
+            messages.error(request, "You don't have permission to update this event.")
             return redirect('manager_dashboard')
-            
-        context = {
-            'event': event,
-            'categories': EventCategory.objects.all()
-        }
-        return render(request, 'update_event.html', context)
     except Event.DoesNotExist:
-        messages.error(request, 'Event not found.')
+        messages.error(request, "Event not found.")
         return redirect('manager_dashboard')
+
+    if request.method == 'POST':
+        form = EventUpdateForm(request.POST, request.FILES, instance=event)
+        if form.is_valid():
+            form.save()
+            messages.success(request, 'Event updated successfully!')
+
+            return redirect('manage_spacific_event', event_id=event_id)
+        # Add detailed error logging
+        for field, errors in form.errors.items():
+            for error in errors:
+                messages.error(request, f"{field}: {error}")
+    else:
+        form = EventUpdateForm(instance=event)
+
+    return render(request, 'update_event.html', {
+        'event': event,
+        'form': form,
+        'uuid': event_id
+    })
 
 @login_required
 def manager_delete_event(request, event_id):

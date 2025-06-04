@@ -1,0 +1,234 @@
+{% extends 'user_base.html' %}
+{% load static %}
+
+{% block title %}Update {{ event.title|default:'Event' }}{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* Custom radio button styling */
+    input[type="radio"] {
+        -webkit-appearance: none;
+        -moz-appearance: none;
+        appearance: none;
+        width: 1rem;
+        height: 1rem;
+        border: 2px solid green;
+        border-radius: 50%;
+        outline: none;
+        cursor: pointer;
+    }
+
+    input[type="radio"]:checked {
+        background-color: green;
+        border-color: green;
+        box-shadow: inset 0 0 0 2px white;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<main class="bg-gradient-to-br from-emerald-100 via-teal-50 to-green-100 w-full mx-auto py-8 sm:px-6 lg:px-8">
+    <div class="bg-white p-6 sm:p-8 rounded-xl max-w-3xl mx-auto shadow-xl border border-gray-100">
+        <div class="mb-8 text-center">
+            <h1 class="text-3xl sm:text-4xl font-bold text-emerald-900">Update Your Event</h1>
+            <p class="text-emerald-600 mt-2">Modify the details below to update your event.</p>
+        </div>
+
+        {% if messages %}
+        <div class="mb-6">
+            {% for message in messages %}
+            <div class="p-4 rounded-lg {% if message.tags == 'error' %}bg-red-50 text-red-700{% else %}bg-green-50 text-green-700{% endif %}">
+                {{ message }}
+            </div>
+            {% endfor %}
+        </div>
+        {% endif %}
+
+        <form method="POST" action="{% url 'manager_update_event' event_id=uuid %}" enctype="multipart/form-data">
+            {% csrf_token %}
+
+            {% if form.non_field_errors %}
+                <div class="mb-4 p-3 bg-red-100 text-red-700 rounded-lg">
+                    <h4 class="font-semibold">Errors:</h4>
+                    <ul class="list-disc list-inside">
+                        {% for error in form.non_field_errors %}
+                            <li>{{ error }}</li>
+                        {% endfor %}
+                    </ul>
+                </div>
+            {% endif %}
+
+            <div>
+                <label for="id_title" class="block text-sm font-medium text-gray-700 mb-1">Event Name <span class="text-red-500">*</span></label>
+                <input type="text" name="title" id="id_title" required value="{{ form.title.value|default:event.title }}"
+                       class="w-full px-4 py-2.5 border {% if form.title.errors %}border-red-500{% else %}border-emerald-700{% endif %} rounded-lg shadow-sm transition-all duration-200">
+                {% if form.title.errors %}
+                    <p class="text-red-500 text-xs mt-1">{{ form.title.errors|striptags }}</p>
+                {% endif %}
+            </div>
+
+            <div>
+                <label for="id_category" class="block text-sm font-medium border-emerald-700 mb-1">Event Category <span class="text-red-500">*</span></label>
+                <select id="id_category" name="category" required
+                        class="w-full px-4 py-2.5 border {% if form.category.errors %}border-red-500{% else %}border-emerald-700{% endif %} rounded-lg shadow-sm transition-all duration-200 bg-white">
+                    <option value="" disabled>Select a category</option>
+                    <option value="general" {% if form.category.value == "general" or event.category.name == "general" %}selected{% endif %}>General</option>
+                    <option value="conference" {% if form.category.value == "conference" or event.category.name == "conference" %}selected{% endif %}>Conference</option>
+                    <option value="workshop" {% if form.category.value == "workshop" or event.category.name == "workshop" %}selected{% endif %}>Workshop</option>
+                    <option value="meetup" {% if form.category.value == "meetup" or event.category.name == "meetup" %}selected{% endif %}>Meetup</option>
+                    <option value="webinar" {% if form.category.value == "webinar" or event.category.name == "webinar" %}selected{% endif %}>Webinar</option>
+                    <option value="social" {% if form.category.value == "social" or event.category.name == "social" %}selected{% endif %}>Social Gathering</option>
+                    <option value="sports" {% if form.category.value == "sports" or event.category.name == "sports" %}selected{% endif %}>Sports</option>
+                    <option value="other" {% if form.category.value == "other" or event.category.name == "other" %}selected{% endif %}>Other</option>
+                </select>
+                {% if form.category.errors %}
+                    <p class="text-red-500 text-xs mt-1">{{ form.category.errors|striptags }}</p>
+                {% endif %}
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                <div>
+                    <label for="id_date" class="block text-sm font-medium text-gray-700 mb-1">Date <span class="text-red-500">*</span></label>
+                    <input type="date" name="date" id="id_date" required 
+                    value="{% if form.date.value %}{{ form.date.value|date:'Y-m-d' }}{% elif event.date %}{{ event.date|date:'Y-m-d' }}{% endif %}"
+                           class="w-full px-4 py-2.5 border {% if form.date.errors %}border-red-500{% else %}border-emerald-700{% endif %} rounded-lg shadow-sm transition-all duration-200"
+                           min="{% now 'Y-m-d' %}">
+                    {% if form.date.errors %}
+                        <p class="text-red-500 text-xs mt-1">{{ form.date.errors|striptags }}</p>
+                    {% endif %}
+                </div>
+                <div>
+                    <label for="id_time" class="block text-sm font-medium text-gray-700 mb-1">Time <span class="text-red-500">*</span></label>
+                    <input type="time" name="time" id="id_time" required 
+                           value="{% if form.time.value %}{{ form.time.value|time:'H:i' }}{% elif event.time %}{{ event.time|time:'H:i' }}{% endif %}"
+                           class="w-full px-4 py-2.5 border {% if form.time.errors %}border-red-500{% else %}border-emerald-700{% endif %} rounded-lg shadow-sm transition-all duration-200">
+                    {% if form.time.errors %}
+                        <p class="text-red-500 text-xs mt-1">{{ form.time.errors|striptags }}</p>
+                    {% endif %}
+                </div>
+            </div>
+
+            <div>
+                <label for="id_location" class="block text-sm font-medium text-gray-700 mb-1">Location <span class="text-red-500">*</span></label>
+                <input type="text" name="location" id="id_location" required value="{{ form.location.value|default:event.location }}"
+                       class="w-full px-4 py-2.5 border {% if form.location.errors %}border-red-500{% else %}border-emerald-700{% endif %} rounded-lg shadow-sm transition-all duration-200"
+                       placeholder="e.g., 123 Main St, Anytown or Online">
+                {% if form.location.errors %}
+                    <p class="text-red-500 text-xs mt-1">{{ form.location.errors|striptags }}</p>
+                {% endif %}
+            </div>
+
+            <div>
+                <label for="id_description" class="block text-sm font-medium text-gray-700 mb-1">Description <span class="text-red-500">*</span></label>
+                <textarea id="id_description" name="description" rows="5" required
+                          class="w-full px-4 py-2.5 border {% if form.description.errors %}border-red-500{% else %}border-emerald-700{% endif %} rounded-lg shadow-sm transition-all duration-200"
+                          placeholder="Provide a detailed description of your event...">{{ form.description.value|default:event.description }}</textarea>
+                {% if form.description.errors %}
+                    <p class="text-red-500 text-xs mt-1">{{ form.description.errors|striptags }}</p>
+                {% endif %}
+            </div>
+
+            <div>
+                <label for="id_event_cover" class="block text-sm font-medium text-gray-700 mb-1">Event Cover Photo (Optional)</label>
+                {% if event.event_cover %}
+                    <div class="mb-2">
+                        <p class="text-sm text-gray-500">Current Cover:</p>
+                        <img src="{{ event.event_cover.url }}" alt="Current Event Cover" class="mt-1 rounded-lg" style="max-width: 250px; height: auto;">
+                    </div>
+                {% endif %}
+                <input type="file" name="event_cover" id="id_event_cover"
+                       class="w-full px-4 py-2.5 border {% if form.event_cover.errors %}border-red-500{% else %}border-emerald-700{% endif %} rounded-lg shadow-sm transition-all duration-200"
+                       placeholder="image.jpg">
+                {% if form.event_cover.errors %}
+                    <p class="text-red-500 text-xs mt-1">{{ form.event_cover.errors|striptags }}</p>
+                {% endif %}
+                <p class="mt-1 text-xs text-gray-500">Upload an image for your event (e.g., banner, logo).</p>
+            </div>
+
+            <div>
+                <label for="id_max_attendees" class="block text-sm font-medium text-gray-700 mb-1">Maximum Attendees (Optional)</label>
+                <input type="number" name="max_attendees" id="id_max_attendees" min="1" value="{{ form.max_attendees.value|default:event.max_attendees }}"
+                       class="w-full px-4 py-2.5 border {% if form.max_attendees.errors %}border-red-500{% else %}border-emerald-700{% endif %} rounded-lg shadow-sm transition-all duration-200"
+                       placeholder="e.g., 100 (leave blank for unlimited)">
+                {% if form.max_attendees.errors %}
+                    <p class="text-red-500 text-xs mt-1">{{ form.max_attendees.errors|striptags }}</p>
+                {% endif %}
+            </div>
+
+            <div>
+                <label class="block text-sm font-medium border-emerald-700 mb-2">Visibility <span class="text-red-500">*</span></label>
+                <div class="flex items-center space-x-6">
+                    <div class="flex items-center">
+                        <input id="id_visibility_0" name="visibility" type="radio" value="PUBLIC" required {% if form.visibility.value == "PUBLIC" or event.visibility == "PUBLIC" %}checked{% endif %}>
+                        <label for="id_visibility_0" class="ml-2 block text-sm text-gray-900">
+                            Public (Visible to everyone)
+                        </label>
+                    </div>
+                    <div class="flex items-center">
+                        <input id="id_visibility_1" name="visibility" type="radio" value="PRIVATE" required {% if form.visibility.value == "PRIVATE" or event.visibility == "PRIVATE" %}checked{% endif %}>
+                        <label for="id_visibility_1" class="ml-2 block text-sm text-gray-900">
+                            Private (Only visible via direct link/invite)
+                        </label>
+                    </div>
+                </div>
+                {% if form.visibility.errors %}
+                    <p class="text-red-500 text-xs mt-1">{{ form.visibility.errors|striptags }}</p>
+                {% endif %}
+            </div>
+
+            <div>
+                <label for="id_tags" class="block text-sm font-medium text-gray-700 mb-1">Tags (Optional)</label>
+                <input type="text" name="tags" id="id_tags" value="{{ form.tags.value|default:event.tags }}"
+                       class="w-full px-4 py-2.5 border {% if form.tags.errors %}border-red-500{% else %}border-emerald-700{% endif %} rounded-lg shadow-sm transition-all duration-200"
+                       placeholder="e.g., tech, networking, startup (comma-separated)">
+                {% if form.tags.errors %}
+                    <p class="text-red-500 text-xs mt-1">{{ form.tags.errors|striptags }}</p>
+                {% endif %}
+                <p class="mt-1 text-xs text-gray-500">Help people find your event. Separate tags with commas.</p>
+            </div>
+
+            <div class="pt-4">
+                <button type="submit"
+                        class="w-full flex justify-center py-3 px-4 border border-transparent rounded-lg shadow-sm text-sm font-semibold text-white bg-emerald-600 hover:bg-emerald-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-600 transition-colors duration-200">
+                    Update Event
+                </button>
+            </div>
+        </form>
+    </div>
+</main>
+
+<script>
+    // Optional: JavaScript for date/time validation or dynamic interactions
+    document.addEventListener('DOMContentLoaded', function() {
+        const dateInput = document.getElementById('id_date');
+        const timeInput = document.getElementById('id_time');
+
+        // Set minimum date to today
+        const today = new Date().toISOString().split('T')[0];
+        if(dateInput) {
+            dateInput.setAttribute('min', today);
+        }
+
+        // Basic future time validation if date is today
+        if(dateInput && timeInput) {
+            dateInput.addEventListener('change', validateTime);
+            timeInput.addEventListener('change', validateTime);
+        }
+
+        function validateTime() {
+            const selectedDate = dateInput.value;
+            const selectedTime = timeInput.value;
+
+            if (selectedDate === today && selectedTime) {
+                const now = new Date();
+                const currentTime = now.getHours().toString().padStart(2, '0') + ':' + now.getMinutes().toString().padStart(2, '0');
+                if (selectedTime < currentTime) {
+                    alert("For today's events, please select a future time.");
+                    timeInput.value = ''; // Reset time
+                }
+            }
+        }
+    });
+</script>
+
+{% endblock %}

@@ -1,5 +1,7 @@
 from django.urls import path, include
 from . import views
+from django.conf import settings
+from django.conf.urls.static import static
 
 urlpatterns = [    
     path('admin_dashboard/', views.admin_dashboard, name='admin_dashboard'),
@@ -16,5 +18,5 @@ urlpatterns = [
     path('join_event/<uuid:event_id>/', views.join_event, name='join_event'),
     path('accept_invitation/<uuid:event_id>/', views.accept_invitation, name='accept_invitation'),
     path('decline_invitation/<uuid:event_id>/', views.decline_invitation, name='decline_invitation'),
-]
+]+ static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
 
