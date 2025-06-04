@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .header {
+            background-color: #059669;  /* emerald-600 equivalent */
+            color: white;
+            padding: 4rem;  /* p-16 equivalent */
+            text-align: center;
+            border: 2px solid #059669;  /* border-emerald-600 equivalent */
+        }
+        .content {
+            background-color: #ffffff;
+            padding: 20px;
+            border: 1px solid #e5e7eb;
+            border-radius: 0 0 5px 5px;
+        }
+        .footer {
+            text-align: center;
+            margin-top: 20px;
+            color: #6B7280;
+            font-size: 0.875rem;
+        }
+        .button {
+            display: inline-block;
+            padding: 10px 20px;
+            background-color: #059669;  /* emerald-600 equivalent */
+            color: white;
+            text-decoration: none;
+            border-radius: 5px;
+            margin: 20px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>Request Accepted!</h1>
+    </div>
+    <div class="content">
+        <p>Dear {{ user_name }},</p>
+        
+        <p>We are very happy to inform you that your request to join <strong>{{ event_name }}</strong> as a <strong>{{ role }}</strong> has been accepted by the Manager of the event.</p>
+
+        <h3>Event Details:</h3>
+        <ul>
+            <li><strong>Event Name:</strong> {{ event_name }}</li>
+            <li><strong>Your Role:</strong> {{ role }}</li>
+        </ul>
+
+        <p>You can now see all the details in your activity Dashboard.</p>
+
+        <p>If you have any questions, please contact the event manager at: {{ event_manager_email }}</p>
+
+        <p>Thank you for your participation!</p>
+        
+        <p>Best regards,<br>
+        {{ event_name }} Team</p>
+    </div>
+    <div class="footer">
+        <p>This is an automated message, please do not reply directly to this email.</p>
+    </div>
+</body>
+</html> 

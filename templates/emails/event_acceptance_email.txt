@@ -1,0 +1,19 @@
+Dear {{ user_name }},
+
+We are very happy to inform you that your request to join "{{ event_name }}" as a "{{ role }}" has been accepted by the Manager of the event.
+
+Event Details:
+Event Name: {{ event_name }}
+Your Role: {{ role }}
+
+You can now see all the details in your activity Dashboard.
+
+If you have any questions, please contact the event manager at: {{ event_manager_email }}
+
+Thank you for your participation!
+
+Best regards,
+{{ event_name }} Team
+
+---
+This is an automated message, please do not reply directly to this email. 
