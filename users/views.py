@@ -264,7 +264,7 @@ def add_an_event(request):
                 location=event_location,
                 tags=event_tags,
                 visibility=event_visibility.upper(),  # Convert to uppercase to match choices
-                event_cover=request.FILES.get('event_cover'),
+                event_cover=event_cover,
                 max_attendees=max_attendees if max_attendees else None,
                 category=category,
                 creator=request.user  # Set the creator to the current user

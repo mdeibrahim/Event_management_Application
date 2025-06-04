@@ -9,7 +9,7 @@
     <div class="bg-white p-6 sm:p-8 rounded-xl shadow-xl border border-gray-100 mb-8">
         <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
             <div>
-                <h1 class="text-3xl sm:text-4xl font-bold text-indigo-700">{{ event.title | default:"Event Title" }}</h1>
+                <h1 class="text-3xl sm:text-4xl font-bold text-indigo-700">{{ event.title }}</h1>               
                 <p class="text-gray-500 mt-2 text-sm">
                     <i class="fas fa-calendar-alt mr-1.5 text-indigo-400"></i> {{ event.date|date:"l, F j, Y" | default:"N/A" }} at {{ event.time|time:"P" | default:"N/A" }}
                 </p>
@@ -33,6 +33,15 @@
                 <p class="mt-2 text-xs text-gray-500">
                     <i class="fas fa-server mr-1.5 text-indigo-400"></i> Server Time: {{ current_time|date:"F j, Y" }} at {{ current_time|time:"g:i:s A" }}
                 </p>
+            </div>
+            <div class="flex-1 flex justify-center items-center">
+                {% if event.event_cover %}
+                    <img src="{{ event.event_cover.url }}" alt="{{ event.title }}" class="max-w-md w-full h-64 object-cover rounded-lg shadow-lg">
+                {% else %}
+                    <div class="max-w-md w-full h-64 bg-gray-100 rounded-lg shadow-lg flex items-center justify-center">
+                        <span class="text-gray-400"><i class="fas fa-image text-4xl"></i></span>
+                    </div>
+                {% endif %}
             </div>
             <div class=" space-x-3 mt-4 md:mt-0 shrink-0 ">
                 <div class="font-semibold " >
