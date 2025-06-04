@@ -20,6 +20,20 @@ wheels/
 .installed.cfg
 *.egg
 MANIFEST
+.pytest_cache/
+.coverage
+htmlcov/
+.tox/
+.nox/
+.hypothesis/
+.pytest_cache/
+cover/
+*.mo
+*.pot
+*.log
+local_settings.py
+db.sqlite3
+db.sqlite3-journal
 
 # Django
 *.log
@@ -27,7 +41,11 @@ local_settings.py
 db.sqlite3
 db.sqlite3-journal
 staticfiles/
-static/
+static/*
+!static/.gitkeep
+media/*
+!media/.gitkeep
+!media/images/.gitkeep
 *.pyc
 *.pyo
 *.pyd
@@ -38,11 +56,8 @@ static/
 *.mo
 celerybeat-schedule
 celerybeat.pid
-
-# Media files
-media/*
-!media/.gitkeep
-!media/images/.gitkeep
+migrations/*
+!migrations/__init__.py
 
 # Virtual Environment
 venv/
@@ -53,6 +68,8 @@ ENV/
 event_management_env/
 pythonenv*/
 .python-version
+.python-version.*
+.python-version-*
 
 # IDE
 .idea/
@@ -102,6 +119,8 @@ coverage.xml
 .pytest_cache/
 .mypy_cache/
 .ruff_cache/
+.pytest_cache/
+cover/
 
 # Database
 *.sqlite3
@@ -124,6 +143,7 @@ coverage.xml
 .env.development.local
 .env.test.local
 .env.production.local
+*.env
 
 # Tailwind
 theme/static/css/dist/
@@ -153,3 +173,21 @@ lerna-debug.log*
 log/
 tmp/
 temp/
+
+# Backup files
+*.bak
+*.backup
+*~
+*.swp
+*.swo
+*#
+
+# Cache directories
+.cache/
+__pycache__/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.eggs/
+.installed.cfg
+*.egg-info/

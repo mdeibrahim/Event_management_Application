@@ -4,7 +4,7 @@ from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth import get_user_model
 from .sign_up_regestration_form import RegestrationForm
 from tasks.models import Profile
-import re
+from django.contrib.auth.decorators import login_required
 from django.core.mail import send_mail
 from django.conf import settings
 from django.utils.crypto import get_random_string
@@ -107,6 +107,9 @@ def sign_in(request):
             
             if authenticated_user is not None:
                 login(request, authenticated_user)
+                # Check superuser status after successful login
+                # if authenticated_user.is_superuser:
+                #     return redirect('admin_home')
                 messages.success(request, f'Welcome back, {authenticated_user.username}!')
                 return redirect('user_home')
             else:
@@ -116,6 +119,7 @@ def sign_in(request):
     
     return render(request, 'sign_in.html')
 
+@login_required
 def sign_out(request):
     logout(request)
     messages.success(request, 'You have been logged out.')
