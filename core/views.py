@@ -4,7 +4,7 @@ from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth import get_user_model
 from .sign_up_regestration_form import RegestrationForm
 from tasks.models import Profile
-from django.contrib.auth.decorators import login_required
+from django.contrib.auth.decorators import login_required, user_passes_test
 from django.core.mail import send_mail
 from django.conf import settings
 from django.utils.crypto import get_random_string
@@ -124,3 +124,4 @@ def sign_out(request):
     logout(request)
     messages.success(request, 'You have been logged out.')
     return redirect('public_home')
+

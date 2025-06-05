@@ -10,7 +10,12 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/5.2/ref/settings/
 """
 
+import os
 from pathlib import Path
+from dotenv import load_dotenv
+
+# Load environment variables from .env file
+load_dotenv()
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -20,12 +25,13 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/5.2/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-@^a^w_j6wwedbqtq2ciat6zf#022m^_fedd)0&2s!(duj*-u(y'
+SECRET_KEY = os.getenv('SECRET_KEY', 'django-insecure-@^a^w_j6wwedbqtq2ciat6zf#022m^_fedd)0&2s!(duj*-u(y')
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = os.getenv('DEBUG', 'True') == 'True'
 
-ALLOWED_HOSTS = ['127.0.0.1', 'localhost']
+ALLOWED_HOSTS = ['*']
+CSRF_TRUSTED_ORIGIN= ['https://*.onrender.com','http://127.0.0.1:8000']
 
 
 # Application definition
@@ -45,10 +51,10 @@ INSTALLED_APPS = [
     'django_browser_reload',  # Re-enabled for auto-reloading
 ]
 
-TAILWIND_APP_NAME = 'theme'
+TAILWIND_APP_NAME = os.getenv('TAILWIND_APP_NAME', 'theme')
 
 # Tailwind CSS settings
-TAILWIND_CSS_PATH = 'css/dist/styles.css'
+TAILWIND_CSS_PATH = os.getenv('TAILWIND_CSS_PATH', 'css/dist/styles.css')
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
@@ -84,7 +90,7 @@ TEMPLATES = [
 ]
 
 WSGI_APPLICATION = 'event_management_project.wsgi.application'
-NPM_BIN_PATH = "C:\\Program Files\\nodejs\\npm.cmd"
+NPM_BIN_PATH = os.getenv('NPM_BIN_PATH', "C:\\Program Files\\nodejs\\npm.cmd")
 
 # Database
 # https://docs.djangoproject.com/en/5.2/ref/settings/#databases
@@ -101,14 +107,14 @@ NPM_BIN_PATH = "C:\\Program Files\\nodejs\\npm.cmd"
 AUTH_USER_MODEL = 'core.User'
 
 DATABASES = {
-   'default': {
-       'ENGINE': 'django.db.backends.postgresql',
-       'NAME': 'ems_db',
-       'USER': 'postgres',
-       'PASSWORD': '123',
-       'HOST': 'localhost',
-       'PORT': '5432',
-   }
+    'default': {
+        'ENGINE': 'django.db.backends.postgresql',
+        'NAME': os.getenv('DB_NAME', 'ems_db'),
+        'USER': os.getenv('DB_USER', 'postgres'),
+        'PASSWORD': os.getenv('DB_PASSWORD', '123'),
+        'HOST': os.getenv('DB_HOST', 'localhost'),
+        'PORT': os.getenv('DB_PORT', '5432'),
+    }
 }
 
 # Password validation
@@ -135,7 +141,7 @@ AUTH_PASSWORD_VALIDATORS = [
 
 LANGUAGE_CODE = 'en-us'
 
-TIME_ZONE = 'Asia/Dhaka'
+TIME_ZONE = os.getenv('TIME_ZONE', 'Asia/Dhaka')
 
 USE_I18N = True
 
@@ -145,16 +151,16 @@ USE_TZ = True
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/5.2/howto/static-files/
 
-STATIC_URL = '/static/'
+STATIC_URL = os.getenv('STATIC_URL', '/static/')
 STATICFILES_DIRS = [
     BASE_DIR / "static",
     BASE_DIR / "theme" / "static",  # Add theme static directory
 ]
-STATIC_ROOT = BASE_DIR / "staticfiles"
+STATIC_ROOT = os.getenv('STATIC_ROOT', BASE_DIR / "staticfiles")
 
 # Media files
-MEDIA_URL = '/media/'
-MEDIA_ROOT = BASE_DIR / 'media'
+MEDIA_URL = os.getenv('MEDIA_URL', '/media/')
+MEDIA_ROOT = os.getenv('MEDIA_ROOT', BASE_DIR / 'media')
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
@@ -162,17 +168,17 @@ MEDIA_ROOT = BASE_DIR / 'media'
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 # Login URL for @login_required decorator
-LOGIN_URL = 'sign_in'
+LOGIN_URL = os.getenv('LOGIN_URL', 'sign_in')
 
 AUTHENTICATION_BACKENDS = [
     'django.contrib.auth.backends.ModelBackend',
 ]
 
 # Email settings
-EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
-EMAIL_HOST = 'smtp.gmail.com'  
-EMAIL_PORT = 587
-EMAIL_USE_TLS = True
-EMAIL_HOST_USER = 'newaddition121383@gmail.com'  
-EMAIL_HOST_PASSWORD = 'udda vvrj nqze qmdg'  # Your email password or app password
-DEFAULT_FROM_EMAIL = 'newaddition121383@gmail.com'
+EMAIL_BACKEND = os.getenv('EMAIL_BACKEND', 'django.core.mail.backends.smtp.EmailBackend')
+EMAIL_HOST = os.getenv('EMAIL_HOST', 'smtp.gmail.com')
+EMAIL_PORT = int(os.getenv('EMAIL_PORT', 587))
+EMAIL_USE_TLS = os.getenv('EMAIL_USE_TLS', 'True') == 'True'
+EMAIL_HOST_USER = os.getenv('EMAIL_HOST_USER', 'newaddition121383@gmail.com')
+EMAIL_HOST_PASSWORD = os.getenv('EMAIL_HOST_PASSWORD', 'udda vvrj nqze qmdg')
+DEFAULT_FROM_EMAIL = os.getenv('DEFAULT_FROM_EMAIL', 'newaddition121383@gmail.com')
