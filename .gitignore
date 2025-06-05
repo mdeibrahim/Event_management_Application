@@ -130,6 +130,8 @@ theme/static/css/src/
 theme/static/css/tailwind.config.js
 tailwind.config.js
 postcss.config.js
+*.css.map
+*.js.map
 
 # System Files
 Thumbs.db
@@ -170,3 +172,30 @@ __pycache__/
 .eggs/
 .installed.cfg
 *.egg-info/
+
+# Django specific
+*.pyc
+local_settings.py
+db.sqlite3
+db.sqlite3-journal
+media/
+static/
+staticfiles/
+celerybeat-schedule
+celerybeat.pid
+
+# Tailwind specific
+.tailwindcss-cache/
+.tailwindcss-cache.json
+
+# PostgreSQL
+*.dump
+*.sql.gz
+*.sql.bz2
+*.sql.xz
+*.sql.zip
+*.sql.tar
+*.sql.tar.gz
+*.sql.tar.bz2
+*.sql.tar.xz
+*.sql.tar.zip

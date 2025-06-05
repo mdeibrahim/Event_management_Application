@@ -1,0 +1,139 @@
+{% extends 'admin/admin_dashboard_base.html' %}
+
+{% block title %}Notifications{% endblock %}
+
+{% block admin_content %}
+<div class="bg-white rounded-lg shadow-sm p-8">
+    <!-- Header -->
+    <div class="flex justify-between items-center mb-6">
+        <h1 class="text-2xl font-semibold text-gray-800">Notifications</h1>
+        <a href="" class="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 transition-colors">
+            Send Notification
+        </a>
+    </div>
+
+    <!-- Search -->
+    <div class="mb-6">
+        <form method="get" class="flex gap-4">
+            <div class="flex-1">
+                <input type="text" name="search" value="{{ search_query }}" placeholder="Search notifications..." 
+                       class="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+            </div>
+            <button type="submit" class="bg-gray-100 text-gray-700 px-4 py-2 rounded-md hover:bg-gray-200 transition-colors">
+                Search
+            </button>
+        </form>
+    </div>
+
+    <div class="bg-white rounded-lg shadow-sm p-3 mb-4 flex flex-wrap gap-3 text-sm">
+        <form method="post" class="flex flex-wrap gap-3 items-center w-full" id="userActionForm">
+            {% csrf_token %}
+            <div class="flex items-center">
+                <label class="mr-2 text-gray-700">Actions:</label>
+                <select name="action" class="border border-gray-300 rounded-md px-3 py-1.5 focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 bg-white shadow-sm">
+                    <option value="">--------</option>
+                    <option value="delete">Delete Selected</option>
+                </select>
+            </div>
+           
+            <div class="flex items-center">
+                <button type="submit" class="inline-flex items-center px-4 py-1.5 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-emerald-600 hover:bg-emerald-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-500 transition-colors duration-200">
+                    {% comment %} <i class="fas fa-filter mr-2"></i> {% endcomment %}
+                    GO
+                </button>
+            </div>
+        </form>
+    </div>
+
+    <!-- Notifications Table -->
+    <div class="overflow-x-auto">
+        <table class="min-w-full divide-y divide-gray-200">
+            <thead class="bg-gray-50">
+                <tr>
+                    <th class="px-2 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        <input type="checkbox" class="select-all-notifications h-2 w-2 text-blue-600 focus:ring-blue-500 border-gray-300 rounded">
+                    </th>
+                    <th class="px-2 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Message</th>
+                    <th class="px-2 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Recipient</th>
+                    <th class="px-2 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Sender</th>
+                    <th class="px-2 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Event & Timestamp</th>
+                    <th class="px-2 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                </tr>
+            </thead>
+            <tbody class="bg-white divide-y divide-gray-200">
+                {% for notification in notifications %}
+                <tr class="hover:bg-emerald-100 ">
+                    <td class="px-2">
+                        <!-- Debug: ID={{ notification.id }} -->
+                        <input type="checkbox" name="selected_notifications" value="{{ notification.id }}" 
+                            class="notification-checkbox h-2 w-2 text-blue-600 focus:ring-blue-500 border-gray-300 rounded">
+                    </td>
+                    <td class="py-4 px-2">
+                        <div class="text-xs text-gray-900">{{ notification.message|truncatechars:100 }}</div>
+                    </td>
+                    <td class=" py-4 px-2 whitespace-nowrap">
+                        <div class="text-xs font-medium text-gray-900">{{ notification.recipient.username }}</div>
+                        <div class="text-xs text-gray-500">{{ notification.recipient.email }}</div>
+                    </td>
+                    <td class=" py-4 px-2 whitespace-nowrap">
+                        <div class="text-xs font-medium text-gray-900">{{ notification.sender.username }}</div>
+                        <div class="text-xs text-gray-500">{{ notification.sender.email }}</div>
+                    </td>
+                    <td class=" py-4 px-2 whitespace-nowrap">
+                        {% if notification.event %}
+                        <div class="text-xs font-medium text-gray-900">{{ notification.event.title }}</div>
+                        <div class="text-xs text-gray-500">{{ notification.timestamp|date:"M d, Y H:i" }}</div>
+                        
+                        {% else %}
+                        <span class="text-xs text-gray-500">-</span>
+                        {% endif %}
+                    </td>
+                    
+                    <td class="px-2 py-4 whitespace-nowrap text-sm font-medium">
+                        <a href="" class="text-red-600 hover:text-red-900" 
+                           onclick="return confirm('Are you sure you want to delete this notification?')">Delete</a>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="6" class="px-6 py-4 text-center text-gray-500">
+                        No notifications found.
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Summary -->
+    <div class="mt-4 text-sm text-gray-500">
+        Total Notifications: {{ total_notifications }}
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Handle select all checkbox
+        const selectAllCheckbox = document.querySelector('.select-all-notifications');
+        
+        selectAllCheckbox.addEventListener('change', function() {
+            const checkboxes = document.querySelectorAll('.notification-checkbox');
+            checkboxes.forEach(checkbox => {
+                checkbox.checked = this.checked;
+            });
+        });
+
+        // Handle individual checkboxes to update select all state
+        const notificationCheckboxes = document.querySelectorAll('.notification-checkbox');
+        
+        notificationCheckboxes.forEach(checkbox => {
+            checkbox.addEventListener('change', function() {
+                const allChecked = Array.from(notificationCheckboxes).every(cb => cb.checked);
+                selectAllCheckbox.checked = allChecked;
+            });
+        });
+    });
+</script>
+{% endblock %} 

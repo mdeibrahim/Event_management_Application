@@ -2,9 +2,10 @@
   "name": "theme",
   "version": "4.0.1",
   "scripts": {
-    "build:css": "npx tailwindcss -i ./static/input.css -o ./static/output.css --watch",
-    "start": "npm run dev",
-    "build": "npm run build:clean && npm run build:tailwind",
+    "build:css": "npx tailwindcss -i ./static/input.css -o ./static/output.css",
+    "watch:css": "npx tailwindcss -i ./static/input.css -o ./static/output.css --watch",
+    "start": "npm run watch:css",
+    "build": "npm run build:css",
     "build:clean": "rimraf ../static/css/dist",
     "build:tailwind": "cross-env NODE_ENV=production postcss ./src/styles.css -o ../static/css/dist/styles.css --minify",
     "dev": "cross-env NODE_ENV=development postcss ./src/styles.css -o ../static/css/dist/styles.css --watch"

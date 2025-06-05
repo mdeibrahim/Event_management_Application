@@ -1,0 +1,91 @@
+{% extends 'admin/admin_dashboard_base.html' %}
+
+{% block title %}User Profiles{% endblock %}
+
+{% block admin_content %}
+<div class="bg-white rounded-lg shadow-sm p-6">
+    <!-- Header -->
+    <div class="flex justify-between items-center mb-6">
+        <h1 class="text-2xl font-semibold text-gray-800">User Profiles</h1>
+    </div>
+
+    <!-- Search -->
+    <div class="mb-6">
+        <form method="get" class="flex gap-4">
+            <div class="flex-1">
+                <input type="text" name="search" value="{{ search_query }}" placeholder="Search profiles..." 
+                       class="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+            </div>
+            <button type="submit" class="bg-gray-100 text-gray-700 px-4 py-2 rounded-md hover:bg-gray-200 transition-colors">
+                Search
+            </button>
+        </form>
+    </div>
+
+    <!-- Profiles Table -->
+    <div class="overflow-x-auto">
+        <table class="min-w-full divide-y divide-gray-200">
+            <thead class="bg-gray-50">
+                <tr>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">User</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Role</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Bio</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Joined</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                </tr>
+            </thead>
+            <tbody class="bg-white divide-y divide-gray-200">
+                {% for profile in profiles %}
+                <tr>
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        <div class="flex items-center">
+                            {% if profile.profile_picture %}
+                            <img class="h-10 w-10 rounded-full" src="{{ profile.profile_picture.url }}" alt="{{ profile.user.username }}">
+                            {% else %}
+                            <div class="h-10 w-10 rounded-full bg-gray-200 flex items-center justify-center">
+                                <span class="text-gray-500 text-sm">{{ profile.user.username|make_list|first|upper }}</span>
+                            </div>
+                            {% endif %}
+                            <div class="ml-4">
+                                <div class="text-sm font-medium text-gray-900">{{ profile.user.username }}</div>
+                                <div class="text-sm text-gray-500">{{ profile.user.email }}</div>
+                            </div>
+                        </div>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full 
+                            {% if profile.user.primary_role == 'admin' %}bg-red-100 text-red-800
+                            {% elif profile.user.primary_role == 'manager' %}bg-yellow-100 text-yellow-800
+                            {% else %}bg-blue-100 text-blue-800{% endif %}">
+                            {{ profile.user.primary_role|title }}
+                        </span>
+                    </td>
+                    <td class="px-6 py-4">
+                        <div class="text-sm text-gray-500">{{ profile.bio|truncatechars:100 }}</div>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                        {{ profile.user.date_joined|date:"M d, Y" }}
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                        <a href="{% url 'edit_profile' profile.user.id %}" class="text-blue-600 hover:text-blue-900 mr-3">Edit</a>
+                        <a href="{% url 'delete_profile' profile.user.id %}" class="text-red-600 hover:text-red-900" 
+                           onclick="return confirm('Are you sure you want to delete this profile?')">Delete</a>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="5" class="px-6 py-4 text-center text-gray-500">
+                        No profiles found.
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Summary -->
+    <div class="mt-4 text-sm text-gray-500">
+        Total Profiles: {{ total_profiles }}
+    </div>
+</div>
+{% endblock %} 

@@ -1,5 +1,5 @@
 from django.shortcuts import render, redirect, get_object_or_404
-from django.contrib.auth.decorators import login_required
+from django.contrib.auth.decorators import login_required, user_passes_test
 from tasks.models import Event, EventCategory,Profile,User, EventRegistration, Notification
 from django.contrib import messages
 from django.utils import timezone
@@ -11,6 +11,10 @@ import logging
 from django.urls import reverse
 from users.forms import EventForm,EventUpdateForm
 from uuid import UUID
+from django.core.paginator import Paginator, PageNotAnInteger, EmptyPage
+from django.contrib.auth.models import Group
+from django.contrib.auth.models import Permission
+from django.contrib.contenttypes.models import ContentType
 
 
 logger = logging.getLogger(__name__)
@@ -23,6 +27,10 @@ def is_event_running(event_date, event_time):
     
     return (event_date == current_date and 
             event_time and current_time_only >= event_time)
+
+def is_admin(user):
+    """Helper function to check if user is an admin"""
+    return user.is_superuser
 
 def get_filtered_events(user_events, request):
     """Helper function to filter events based on type parameter"""
@@ -55,7 +63,467 @@ def have_a_fun(request):
 def admin_dashboard(request):
     if not request.user.is_superuser:
         return redirect('have_a_fun')
-    return render(request, 'admin/admin_dashboard_home.html')
+    total_events=Event.objects.all()
+    total_users=User.objects.all()
+    # total_revenue=(total_events*5)
+    context={
+        'total_events':total_events.count(),
+        'total_users':total_users.count(),
+        'total_revenue':(total_users.count()*10)+(total_events.count()*5),
+    }
+    return render(request, 'admin/admin_dashboard_home.html',context)
+
+@login_required
+def admin_users(request):
+    if not request.user.is_superuser:
+        messages.error(request, 'You do not have permission to view this page.')
+        return redirect('admin_dashboard')
+    
+    # Get all users
+    users = User.objects.all()
+    
+    # Get filter parameters
+    role_filter = request.GET.get('role')
+    status_filter = request.GET.get('status')
+    search_query = request.GET.get('search')
+    action = request.GET.get('action')
+    
+    # Apply filters
+    if role_filter:
+        if role_filter == 'admin':
+            users = users.filter(is_superuser=True)
+        elif role_filter == 'manager':
+            users = users.filter(is_staff=True, is_superuser=False)
+        elif role_filter == 'general_user':
+            users = users.filter(is_staff=False, is_superuser=False)
+    
+    if status_filter:
+        if status_filter == 'active':
+            users = users.filter(is_active=True)
+        elif status_filter == 'inactive':
+            users = users.filter(is_active=False)
+    
+    if search_query:
+        users = users.filter(
+            Q(username__icontains=search_query) |
+            Q(email__icontains=search_query) |
+            Q(first_name__icontains=search_query) |
+            Q(last_name__icontains=search_query)
+        )
+    
+    # Order users by date joined
+    users = users.order_by('-date_joined')
+    
+    # Get role names for each user
+    for user in users:
+        if user.is_superuser:
+            user.role_name = 'Admin'
+        elif user.is_staff:
+            user.role_name = 'Manager'
+        else:
+            group = user.groups.first()
+            user.role_name = group.name if group else 'General User'
+    
+    # Pagination
+    paginator = Paginator(users, 10)  # Show 10 users per page
+    page = request.GET.get('page')
+    users = paginator.get_page(page)
+    
+    context = {
+        'users': users,
+        'role_filter': role_filter,
+        'status_filter': status_filter,
+        'action': action,
+    }
+    return render(request, 'admin/users.html', context)
+
+@login_required
+@user_passes_test(lambda u: u.is_staff)
+def admin_groups(request):
+    # Get search query
+    search_query = request.GET.get('search', '')
+    
+    # Get all groups
+    groups = Group.objects.all()
+    
+    # Apply search filter
+    if search_query:
+        groups = groups.filter(name__icontains=search_query)
+    
+    # Order groups by name
+    groups = groups.order_by('name')
+    
+    context = {
+        'groups': groups,
+        'search_query': search_query,
+    }
+    return render(request, 'admin/groups.html', context)
+
+@login_required
+@user_passes_test(lambda u: u.is_staff)
+def admin_permissions(request):
+    # Get search query
+    search_query = request.GET.get('search', '')
+    
+    # Get all permissions
+    permissions = Permission.objects.select_related('content_type').all()
+    
+    # Apply search filter
+    if search_query:
+        permissions = permissions.filter(
+            Q(name__icontains=search_query) |
+            Q(codename__icontains=search_query) |
+            Q(content_type__model__icontains=search_query)
+        )
+    
+    # Order permissions by content type and name
+    permissions = permissions.order_by('content_type__app_label', 'content_type__model', 'name')
+    
+    # Group permissions by content type
+    grouped_permissions = {}
+    for permission in permissions:
+        key = f"{permission.content_type.app_label}.{permission.content_type.model}"
+        if key not in grouped_permissions:
+            grouped_permissions[key] = {
+                'content_type': permission.content_type,
+                'permissions': []
+            }
+        grouped_permissions[key]['permissions'].append(permission)
+    
+    context = {
+        'grouped_permissions': grouped_permissions,
+        'search_query': search_query,
+        'total_permissions': permissions.count(),
+    }
+    return render(request, 'admin/permissions.html', context)
+
+
+@login_required
+@user_passes_test(lambda u: u.is_staff)
+def admin_events(request):
+    # Get search query
+    search_query = request.GET.get('search', '')
+    
+    # Get all events
+    events = Event.objects.select_related('creator', 'category').all()
+    
+    # Apply search filter
+    if search_query:
+        events = events.filter(
+            Q(title__icontains=search_query) |
+            Q(description__icontains=search_query) |
+            Q(location__icontains=search_query) |
+            Q(creator__username__icontains=search_query)
+        )
+    
+    # Handle bulk actions
+    if request.method == 'POST':
+        action = request.POST.get('action')
+        selected_ids = request.POST.getlist('selected_items')
+        
+        if action == 'delete' and selected_ids:
+            Event.objects.filter(id__in=selected_ids).delete()
+            messages.success(request, f'Successfully deleted {len(selected_ids)} events.')
+            return redirect('admin_events')
+    
+    # Order events by date
+    events = events.order_by('-date', '-time')
+    
+    context = {
+        'events': events,
+        'search_query': search_query,
+        'total_events': events.count(),
+    }
+    return render(request, 'admin/events.html', context)
+
+@login_required
+@user_passes_test(lambda u: u.is_staff)
+def admin_categories(request):
+    # Get search query
+    search_query = request.GET.get('search', '')
+    
+    # Get all categories
+    categories = EventCategory.objects.all()
+    
+    # Apply search filter
+    if search_query:
+        categories = categories.filter(name__icontains=search_query)
+    
+    # Handle bulk actions
+    if request.method == 'POST':
+        action = request.POST.get('action')
+        selected_ids = request.POST.getlist('selected_items')
+        
+        if action == 'delete' and selected_ids:
+            EventCategory.objects.filter(id__in=selected_ids).delete()
+            messages.success(request, f'Successfully deleted {len(selected_ids)} categories.')
+            return redirect('admin_categories')
+    
+    # Order categories by name
+    categories = categories.order_by('name')
+    
+    context = {
+        'categories': categories,
+        'search_query': search_query,
+        'total_categories': categories.count(),
+    }
+    return render(request, 'admin/categories.html', context)
+
+@login_required
+@user_passes_test(lambda u: u.is_staff)
+def admin_registrations(request):
+    # Get search query
+    search_query = request.GET.get('search', '')
+    
+    # Get all registrations
+    registrations = EventRegistration.objects.select_related('user', 'event').all()
+    
+    # Apply search filter
+    if search_query:
+        registrations = registrations.filter(
+            Q(user__username__icontains=search_query) |
+            Q(event__title__icontains=search_query) |
+            Q(role__icontains=search_query)
+        )
+    
+    # Handle bulk actions
+    if request.method == 'POST':
+        action = request.POST.get('action')
+        selected_ids = request.POST.getlist('selected_items')
+        
+        if action == 'delete' and selected_ids:
+            EventRegistration.objects.filter(id__in=selected_ids).delete()
+            messages.success(request, f'Successfully deleted {len(selected_ids)} registrations.')
+            return redirect('admin_registrations')
+    
+    # Order registrations by date
+    registrations = registrations.order_by('-requested_at')
+    
+    context = {
+        'registrations': registrations,
+        'search_query': search_query,
+        'total_registrations': registrations.count(),
+    }
+    return render(request, 'admin/registrations.html', context)
+
+@login_required
+@user_passes_test(is_admin)
+def admin_notifications(request):
+    # Get all notifications
+    notifications = Notification.objects.select_related('recipient', 'sender', 'event').all()
+    
+    # Debug: Print notification data
+    for notification in notifications:
+        print(f"Notification: {notification.__dict__}")
+    
+    # Apply search filter
+    search_query = request.GET.get('search', '')
+    if search_query:
+        notifications = notifications.filter(
+            Q(message__icontains=search_query) |
+            Q(recipient__username__icontains=search_query) |
+            Q(sender__username__icontains=search_query)
+        )
+    
+    # Handle bulk actions
+    if request.method == 'POST':
+        action = request.POST.get('action')
+        selected_ids = request.POST.getlist('selected_notifications')
+        
+        if action == 'delete' and selected_ids:
+            Notification.objects.filter(id__in=selected_ids).delete()
+            messages.success(request, f'Successfully deleted {len(selected_ids)} notifications.')
+            return redirect('admin_notifications')
+    
+    # Pagination
+    paginator = Paginator(notifications, 10)  # Show 10 notifications per page
+    page = request.GET.get('page')
+    notifications = paginator.get_page(page)
+    
+    context = {
+        'notifications': notifications,
+        'search_query': search_query,
+        'total_notifications': notifications.paginator.count if notifications else 0,
+    }
+    return render(request, 'admin/notifications.html', context)
+
+@login_required
+@user_passes_test(lambda u: u.is_staff)
+def admin_profiles(request):
+    # Get search query
+    search_query = request.GET.get('search', '')
+    
+    # Get all profiles
+    profiles = Profile.objects.select_related('user').all()
+    
+    # Apply search filter
+    if search_query:
+        profiles = profiles.filter(
+            Q(user__username__icontains=search_query) |
+            Q(user__email__icontains=search_query) |
+            Q(bio__icontains=search_query)
+        )
+    
+    # Handle bulk actions
+    if request.method == 'POST':
+        action = request.POST.get('action')
+        selected_ids = request.POST.getlist('selected_items')
+        
+        if action == 'delete' and selected_ids:
+            Profile.objects.filter(id__in=selected_ids).delete()
+            messages.success(request, f'Successfully deleted {len(selected_ids)} profiles.')
+            return redirect('admin_profiles')
+    
+    # Order profiles by user's date joined
+    profiles = profiles.order_by('-user__date_joined')
+    
+    context = {
+        'profiles': profiles,
+        'search_query': search_query,
+        'total_profiles': profiles.count(),
+    }
+    return render(request, 'admin/profiles.html', context)
+
+
+# def is_admin(user):
+#     return user.primary_role == 'ADMIN'
+
+@login_required
+def admin_edit(request, user_id):
+    if not request.user.is_superuser:
+        messages.error(request, 'You do not have permission to edit users.')
+        return redirect('admin_dashboard')
+    
+    user_to_edit = get_object_or_404(User, id=user_id)
+    current_group = user_to_edit.groups.first()
+    
+    # If user is superuser, force admin group
+    if user_to_edit.is_superuser:
+        admin_group = Group.objects.get(name='Admin')
+        if not current_group or current_group != admin_group:
+            user_to_edit.groups.clear()
+            user_to_edit.groups.add(admin_group)
+            current_group = admin_group
+    
+    # If user has no group, set to general_user
+    if not current_group and not user_to_edit.is_superuser:
+        general_user_group = Group.objects.get(name='General User')
+        user_to_edit.groups.add(general_user_group)
+        current_group = general_user_group
+    
+    if request.method == 'POST':
+        # Handle role change
+        new_group_id = request.POST.get('primary_role')
+        if new_group_id and request.user.is_superuser and not user_to_edit.is_superuser:
+            try:
+                new_group = Group.objects.get(id=new_group_id)
+                if new_group.name in ['Admin', 'Manager']:
+                    if not request.user.is_superuser:
+                        messages.error(request, 'Only superusers can assign admin or manager roles.')
+                    else:
+                        user_to_edit.groups.clear()
+                        user_to_edit.groups.add(new_group)
+                        messages.success(request, f'User role changed to {new_group.name}.')
+                else:
+                    user_to_edit.groups.clear()
+                    user_to_edit.groups.add(new_group)
+                    messages.success(request, f'User role changed to {new_group.name}.')
+            except Group.DoesNotExist:
+                messages.error(request, 'Invalid role selected.')
+        
+        # Handle status fields
+        if request.user.is_superuser:
+            is_active = request.POST.get('is_active') == 'on'
+            is_staff = request.POST.get('is_staff') == 'on'
+            is_superuser = request.POST.get('is_superuser') == 'on'
+            
+            # If making user superuser, ensure they're in admin group
+            if is_superuser and not user_to_edit.is_superuser:
+                admin_group = Group.objects.get(name='Admin')
+                user_to_edit.groups.clear()
+                user_to_edit.groups.add(admin_group)
+            
+            # If removing superuser status, set to general user
+            if not is_superuser and user_to_edit.is_superuser:
+                general_user_group = Group.objects.get(name='General User')
+                user_to_edit.groups.clear()
+                user_to_edit.groups.add(general_user_group)
+            
+            user_to_edit.is_active = is_active
+            user_to_edit.is_staff = is_staff
+            user_to_edit.is_superuser = is_superuser
+            user_to_edit.save()
+            messages.success(request, 'User status updated successfully.')
+        
+        return redirect('admin_edit', user_id=user_id)
+    
+    # Get all available groups
+    available_groups = Group.objects.all()
+    
+    # Get current group for role display
+    current_group = user_to_edit.groups.first()
+    role_name = current_group.name if current_group else 'General User'
+    
+    # Determine role display info
+    role_info = {
+        'current_role': {
+            'bg_color': 'bg-emerald-100',
+            'text_color': 'text-emerald-800'
+        }
+    }
+    
+    context = {
+        'user': user_to_edit,
+        'available_groups': available_groups,
+        'current_role': current_group,
+        'role_name': role_name,
+        'role_info': role_info,
+        'is_superuser': request.user.is_superuser,
+    }
+    
+    return render(request, 'admin/admin_edit_user.html', context)
+
+@login_required
+def admin_edit_user(request):
+    if not request.user.primary_role == 'ADMIN':
+        messages.error(request, 'You do not have permission to access this page.')
+        return redirect('user_home')
+        
+    if request.method == 'POST':
+        user = request.user
+        user.username = request.POST.get('username')
+        user.email = request.POST.get('email')
+        user.first_name = request.POST.get('first_name')
+        user.last_name = request.POST.get('last_name')
+        user.primary_role = request.POST.get('primary_role')
+        
+        # Handle boolean fields
+        user.is_active = request.POST.get('is_active') == 'on'
+        user.is_staff = request.POST.get('is_staff') == 'on'
+        user.is_superuser = request.POST.get('is_superuser') == 'on'
+        
+        # Handle date fields
+        try:
+            last_login = request.POST.get('last_login')
+            if last_login:
+                user.last_login = timezone.make_aware(datetime.strptime(last_login, '%Y-%m-%dT%H:%M:%S'))
+            
+            date_joined = request.POST.get('date_joined')
+            if date_joined:
+                user.date_joined = timezone.make_aware(datetime.strptime(date_joined, '%Y-%m-%dT%H:%M:%S'))
+        except ValueError as e:
+            messages.error(request, f'Invalid date format: {str(e)}')
+            return redirect('admin_edit_user')
+        
+        try:
+            user.save()
+            messages.success(request, 'User information updated successfully!')
+        except Exception as e:
+            messages.error(request, f'Error updating user information: {str(e)}')
+        
+        return redirect('admin_edit_user')
+    
+    return render(request, 'admin/admin_edit_user.html', {'user': request.user})
 
 @login_required
 def user_home(request):
@@ -734,3 +1202,9 @@ def decline_invitation(request, event_id):
             messages.error(request, 'An error occurred while processing your request.')
             
     return redirect('user_home')
+
+
+
+
+
+

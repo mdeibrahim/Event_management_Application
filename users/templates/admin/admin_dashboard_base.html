@@ -95,7 +95,7 @@
 </head>
 <body class="bg-gray-100 text-gray-800 h-full">
     <div class="flex h-full overflow-hidden">
-        <aside class="w-64 bg-emerald-800 text-emerald-100 flex flex-col fixed inset-y-0 left-0 z-30 shadow-lg transform md:translate-x-0 -translate-x-full transition-transform duration-300 ease-in-out" id="adminSidebar">
+        <aside class="w-72 bg-emerald-800 text-emerald-100 flex flex-col fixed inset-y-0 left-0 z-30 shadow-lg transform md:translate-x-0 -translate-x-full transition-transform duration-300 ease-in-out" id="adminSidebar">
             <div class="p-4 border-b border-emerald-700">
                 <a href="{% url 'admin_dashboard' %}" class="flex items-center space-x-2">
                     <i class="fas fa-cogs text-2xl text-amber-300"></i>
@@ -109,29 +109,96 @@
                 </a>
                 
                 <div>
-                    <button class="sidebar-link w-full text-left focus:outline-none" onclick="toggleDropdown('userManagementDropdown')">
+                    <button class="sidebar-link w-full text-left text-sm focus:outline-none {% if 'admin_users' in request.path or 'admin_groups' in request.path or 'admin_permissions' in request.path %}bg-emerald-700{% endif %}" 
+                            onclick="toggleDropdown('userManagementDropdown')">
                         <i class="fas fa-users"></i>
-                        <span>User Management</span>
-                        <i class="fas fa-chevron-down ml-auto transform transition-transform duration-200" id="userManagementDropdownIcon"></i>
+                        <span class="text-white">User Management</span>
+                        <i class="fas fa-chevron-down ml-auto transform transition-transform duration-200 {% if 'admin_users' in request.path or 'admin_groups' in request.path or 'admin_permissions' in request.path %}rotate-180{% endif %}" 
+                           id="userManagementDropdownIcon"></i>
                     </button>
-                    <div id="userManagementDropdown" class="hidden pl-8 space-y-1 mt-1">
-                        <a href="#" class="block text-sm py-1 px-2 hover:bg-emerald-700 rounded-md">Users</a>
-                        <a href="#" class="block text-sm py-1 px-2 hover:bg-emerald-700 rounded-md">Groups</a>
-                        <a href="#" class="block text-sm py-1 px-2 hover:bg-emerald-700 rounded-md">Permissions</a>
+                    <div id="userManagementDropdown" class="pl-8 space-y-1 mt-1 text-xs {% if 'admin_users' in request.path or 'admin_groups' in request.path or 'admin_permissions' in request.path %}block{% else %}hidden{% endif %}">
+                        <div class="flex justify-between items-center">
+                            <a href="{% url 'admin_users' %}" 
+                               class="block py-1 px-2 hover:bg-emerald-700 rounded-md {% if request.path == '/admin/users/' %}bg-emerald-700 text-white font-medium{% endif %}">
+                                Users
+                            </a>
+                            <a href="{% url 'admin:core_user_add' %}" 
+                               class="block py-1 px-2 hover:bg-emerald-700 rounded-md">
+                                <i class="fa fa-plus" aria-hidden="true"></i> Add
+                            </a>
+                        </div>
+                        <div class="flex justify-between items-center">
+                            <a href="{% url 'admin_groups' %}" 
+                               class="block text-xs py-1 px-2 hover:bg-emerald-700 rounded-md {% if request.path == '/admin/groups/' %}bg-emerald-700 text-white font-medium{% endif %}">
+                                Groups
+                            </a>
+                            <a href="{% url 'admin:auth_group_add' %}" 
+                               class="block text-xs py-1 px-2 hover:bg-emerald-700 rounded-md">
+                                <i class="fa fa-plus" aria-hidden="true"></i> Add
+                            </a>
+                        </div>
+                        <div class="flex justify-between items-center">
+                            <a href="{% url 'admin_permissions' %}" 
+                               class="block text-xs py-1 px-2 hover:bg-emerald-700 rounded-md {% if request.path == '/admin/permissions/' %}bg-emerald-700 text-white font-medium{% endif %}">
+                                Permissions
+                            </a>
+                            <a href="{% url 'admin:auth_permission_add' %}" 
+                               class="block text-xs py-1 px-2 hover:bg-emerald-700 rounded-md">
+                                <i class="fa fa-plus" aria-hidden="true"></i> Add
+                            </a>
+                        </div>
                     </div>
                 </div>
 
                 <div>
-                    <button class="sidebar-link w-full text-left focus:outline-none" onclick="toggleDropdown('eventManagementDropdown')">
+                    <button class="sidebar-link w-full text-left text-xs focus:outline-none" onclick="toggleDropdown('eventManagementDropdown')">
                         <i class="fas fa-calendar-alt"></i>
-                        <span>Event Management</span>
+                        <span class="text-white">Event Management</span>
                         <i class="fas fa-chevron-down ml-auto transform transition-transform duration-200" id="eventManagementDropdownIcon"></i>
                     </button>
                     <div id="eventManagementDropdown" class="hidden pl-8 space-y-1 mt-1">
-                        <a href="#" class="block text-sm py-1 px-2 hover:bg-emerald-700 rounded-md">Events</a>
-                        <a href="#" class="block text-sm py-1 px-2 hover:bg-emerald-700 rounded-md">Categories</a>
-                        <a href="#" class="block text-sm py-1 px-2 hover:bg-emerald-700 rounded-md">Venues</a>
-                        <!-- <button class="block text-sm py-1 px-2 hover:bg-emerald-700 rounded-md w-full text-left mt-1 text-emerald-200" 
+                        <div class="flex justify-between">
+                            <div>
+                                <a href="{% url 'admin_events' %}" class="block text-xs py-1 px-2 hover:bg-emerald-700 rounded-md">Events</a>
+                            </div>
+                            <div>
+                                <a href="{% url 'admin_users' %}" class="block text-xs py-1 px-2 hover:bg-emerald-700 rounded-md"><i class="fa fa-plus" aria-hidden="true"></i></i> Add</a>
+                            </div>
+                        </div>
+                        <div class="flex justify-between">
+                            <div>
+                                <a href="{% url 'admin_categories' %}" class="block text-xs py-1 px-2 hover:bg-emerald-700 rounded-md">Event Categories</a>
+                            </div>
+                            <div>
+                                <a href="{% url 'admin_users' %}" class="block text-xs py-1 px-2 hover:bg-emerald-700 rounded-md"><i class="fa fa-plus" aria-hidden="true"></i></i> Add</a>
+                            </div>
+                        </div>
+                        <div class="flex justify-between">
+                            <div>
+                                <a href="{% url 'admin_registrations' %}" class="block text-xs py-1 px-2 hover:bg-emerald-700 rounded-md">Event registrationsnts</a>
+                            </div>
+                            <div>
+                                <a href="{% url 'admin_users' %}" class="block text-xs py-1 px-2 hover:bg-emerald-700 rounded-md"><i class="fa fa-plus" aria-hidden="true"></i></i> Add</a>
+                            </div>
+                        </div>
+                        <div class="flex justify-between">
+                            <div>
+                                <a href="{% url 'admin_notifications' %}" class="block text-xs py-1 px-2 hover:bg-emerald-700 rounded-md">Notifications</a>
+                            </div>
+                            <div>
+                                <a href="{% url 'admin_users' %}" class="block text-xs py-1 px-2 hover:bg-emerald-700 rounded-md"><i class="fa fa-plus" aria-hidden="true"></i></i> Add</a>
+                            </div>
+                        </div>
+                        <div class="flex justify-between">
+                            <div>
+                                <a href="{% url 'admin_users' %}" class="block text-xs py-1 px-2 hover:bg-emerald-700 rounded-md">Profiles</a>
+                            </div>
+                            <div>
+                                <a href="{% url 'admin_users' %}" class="block text-xs py-1 px-2 hover:bg-emerald-700 rounded-md"><i class="fa fa-plus" aria-hidden="true"></i></i> Add</a>
+                            </div>
+                        </div>
+                        
+                        <!-- <button class="block text-xs py-1 px-2 hover:bg-emerald-700 rounded-md w-full text-left mt-1 text-emerald-200" 
                                  onclick="openGeminiModal('Generate Event Description', 'Enter keywords for the event (e.g., tech conference, summer, AI focus)', '✨ Generate Description', handleEventDescription)">
                             ✨ Auto-Gen Description
                         </button> -->
@@ -139,30 +206,30 @@
                 </div>
 
                 <div>
-                    <button class="sidebar-link w-full text-left focus:outline-none" onclick="toggleDropdown('aiToolsDropdown')">
+                    <button class="sidebar-link w-full text-left text-sm focus:outline-none" onclick="toggleDropdown('aiToolsDropdown')">
                         <i class="fas fa-magic"></i>
-                        <span>AI Tools</span>
+                        <span class="text-white">AI Tools</span>
                         <i class="fas fa-chevron-down ml-auto transform transition-transform duration-200" id="aiToolsDropdownIcon"></i>
                     </button>
                     <div id="aiToolsDropdown" class="hidden pl-8 space-y-1 mt-1">
                         <button class="block text-sm py-1 px-2 hover:bg-emerald-700 rounded-md w-full text-left text-emerald-200"
-                                onclick="openGeminiModal('Event Idea Generator', 'What kind of event are you thinking about? (e.g., corporate team building, charity fundraiser, kids birthday party)', '✨ Generate Ideas', displayGeneratedEventIdeas)">
+                                 onclick="openGeminiModal('Event Idea Generator', '{% comment %}What kind of event are you thinking about? (e.g., corporate team building, charity fundraiser, kids birthday party){% endcomment %}  <<!! Not Implemented yet !!>>', '✨ Generate Ideas', displayGeneratedEventIdeas)"> 
                             Event Idea Generator
                         </button>
                          </div>
                 </div>
                 
-                <a href="#" class="sidebar-link">
+                <a href="#" class="sidebar-link text-sm">
                     <i class="fas fa-file-alt"></i>
-                    <span>Reports</span>
+                    <span class="text-white">Reports</span>
                 </a>
-                <a href="#" class="sidebar-link">
+                <a href="#" class="sidebar-link text-sm">
                     <i class="fas fa-cogs"></i>
-                    <span>Site Settings</span>
+                    <span class="text-white">Site Settings</span>
                 </a>
-                 <a href="{% url 'public_home' %}" class="sidebar-link">
+                 <a href="{% url 'public_home' %}" class="sidebar-link text-sm">
                     <i class="fas fa-globe"></i>
-                    <span>View Public Site</span>
+                    <span class="text-white">View Public Site</span>
                 </a>
             </nav>
             <div class="p-4 border-t border-emerald-700">
@@ -179,11 +246,11 @@
         <div class="flex-1 flex flex-col md:ml-64 transition-all duration-300 ease-in-out">
             <header class="bg-white shadow-md p-4 flex justify-between items-center sticky top-0 z-20">
                 
-                <div>
+                <div class="pl-9">
                     <button class="text-gray-600 hover:text-emerald-600 md:hidden" id="openSidebarButton">
                         <i class="fas fa-bars text-xl"></i>
                     </button>
-                    <h1 class="text-xl font-semibold text-emerald-800 hidden md:block">Welcome To Admin Dashboard</h1>
+                    <h1 class="text-xl font-semibold text-emerald-800 hidden md:block">  Welcome To Admin Dashboard</h1>
                 </div>
                 <div class="flex font-bold text-emerald-600">
                     <a href="{% url 'user_home' %}">
@@ -218,7 +285,7 @@
                     {% endblock %}
                 </main>
 
-                <footer class="bg-white border-t border-gray-200 py-4 px-6">
+                <footer class="bg-white p-12 m-6 ml-12 border-t border-gray-200 py-4 ">
                     <div class="flex justify-between items-center">
                         <div class="text-sm text-gray-600">
                             &copy; {% now "Y" %} EventPro. All rights reserved.
@@ -270,17 +337,16 @@
         // Dropdown toggle for sidebar items
         function toggleDropdown(dropdownId) {
             const dropdown = document.getElementById(dropdownId);
-            const icon = document.getElementById(dropdownId + 'Icon'); // Assumes icon has ID like 'dropdownIdIcon'
-            if (dropdown) {
-                const isHidden = dropdown.classList.contains('hidden');
-                // Close other open dropdowns if you want only one open at a time (optional)
-                // document.querySelectorAll('.sidebar-dropdown-content.hidden').forEach(el => el.classList.add('hidden'));
-                // document.querySelectorAll('.sidebar-dropdown-icon.rotate-180').forEach(el => el.classList.remove('rotate-180'));
-
-                dropdown.classList.toggle('hidden');
-                if (icon) {
-                    icon.classList.toggle('rotate-180', !isHidden);
-                }
+            const icon = document.getElementById(dropdownId + 'Icon');
+            
+            if (dropdown.classList.contains('hidden')) {
+                dropdown.classList.remove('hidden');
+                dropdown.classList.add('block');
+                icon.classList.add('rotate-180');
+            } else {
+                dropdown.classList.remove('block');
+                dropdown.classList.add('hidden');
+                icon.classList.remove('rotate-180');
             }
         }
         
@@ -390,32 +456,32 @@
         // --- Specific Gemini Feature Handlers ---
         // Example: Handler for displaying event ideas (to be used by admin_dashboard_home.html)
         function displayGeneratedEventIdeas(ideasText) {
-            // This function will be called with the AI's response.
-            // It should update a specific part of the page (e.g., on admin_dashboard_home.html)
-            // For now, it will just put it in the modal. If you want it elsewhere,
-            // you'll need to ensure the target element exists on the current page.
             geminiModalResult.innerHTML = `<p class="font-semibold mb-2">Generated Event Ideas:</p><div class="whitespace-pre-wrap">${ideasText.replace(/\n/g, '<br>')}</div>`;
             
-            // If you want to close the modal and show it on the main page:
-            // closeGeminiModal();
-            // const targetElement = document.getElementById('eventIdeasContainer'); // Assuming this ID exists on admin_dashboard_home.html
-            // if (targetElement) {
-            //     targetElement.innerHTML = `<h3 class="text-lg font-semibold text-emerald-800 mb-3">✨ AI Generated Event Ideas</h3><div class="p-4 bg-emerald-50 rounded-md whitespace-pre-wrap">${ideasText.replace(/\n/g, '<br>')}</div>`;
-            // } else {
-            //     console.warn("Target element for event ideas not found on this page.");
-            // }
+           
         }
 
-        // Conceptual: Handler for event description (if you implement that feature)
-        // function handleEventDescription(descriptionText) {
-        //     closeGeminiModal();
-        //     const descriptionField = document.getElementById('id_event_description_field'); // Replace with actual field ID
-        //     if (descriptionField) {
-        //         descriptionField.value = descriptionText;
-        //     } else {
-        //         alert("Generated Description:\n\n" + descriptionText);
-        //     }
-        // }
+        // Function to check if a URL contains a specific path
+        function isActivePath(path) {
+            return window.location.pathname.includes(path);
+        }
+
+        // Initialize dropdowns based on current URL
+        document.addEventListener('DOMContentLoaded', function() {
+            const currentPath = window.location.pathname;
+            const userManagementPaths = ['/admin/users/', '/admin/groups/', '/admin/permissions/'];
+            
+            if (userManagementPaths.some(path => currentPath.includes(path))) {
+                const dropdown = document.getElementById('userManagementDropdown');
+                const icon = document.getElementById('userManagementDropdownIcon');
+                
+                if (dropdown && icon) {
+                    dropdown.classList.remove('hidden');
+                    dropdown.classList.add('block');
+                    icon.classList.add('rotate-180');
+                }
+            }
+        });
 
     </script>
     {% block extra_admin_js %}{% endblock %}
