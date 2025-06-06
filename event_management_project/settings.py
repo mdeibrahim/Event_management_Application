@@ -11,9 +11,12 @@ SECRET_KEY =config('SECRET_KEY')
 
 # SECURITY WARNING: don't run with debug turned on in production!
 # DEBUG = os.getenv('DEBUG', 'True') == 'True'
-DEBUG=True
-ALLOWED_HOSTS = ['*']
-CSRF_TRUSTED_ORIGIN= ['https://*.onrender.com','http://127.0.0.1:8000']
+# DEBUG=True
+DEBUG = config('DEBUG', default=False, cast=bool)
+# ALLOWED_HOSTS = ['*']
+ALLOWED_HOSTS = config('ALLOWED_HOSTS', cast=lambda v: [s.strip() for s in v.split(',')])
+# CSRF_TRUSTED_ORIGINS= ['https://*.onrender.com','http://127.0.0.1:8000']
+CSRF_TRUSTED_ORIGINS = config('CSRF_TRUSTED_ORIGINS', cast=lambda v: [s.strip() for s in v.split(',')])
 
 
 # Application definition
@@ -137,12 +140,6 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/5.2/howto/static-files/
 
 STATIC_URL = '/static/'
-# STATICFILES_DIRS = [
-#     BASE_DIR / "static",
-#     BASE_DIR / "theme" / "static",
-#     BASE_DIR / "theme" / "static_src",
-# ]
-# STATIC_ROOT = BASE_DIR / "staticfiles"
 STATICFILES_DIRS = [
 
     BASE_DIR / "static",
