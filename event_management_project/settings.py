@@ -1,7 +1,7 @@
 from pathlib import Path
 import dj_database_url
 from decouple import config
-
+import os
 
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
@@ -137,8 +137,9 @@ USE_TZ = True
 
 STATIC_URL = '/static/'
 STATICFILES_DIRS = [
+    os.path.join(BASE_DIR, 'theme/static'),
     BASE_DIR / "static",
-    BASE_DIR / "theme" / "static",
+    # BASE_DIR / "theme" / "static",
     BASE_DIR / "theme" / "static_src",
 ]
 STATIC_ROOT = BASE_DIR / "staticfiles"
