@@ -122,7 +122,7 @@ cover/
 
 # Tailwind
 
-*.css.map
+
 *.js.map
 
 # System Files
@@ -177,8 +177,8 @@ celerybeat-schedule
 celerybeat.pid
 
 # Tailwind specific
-.tailwindcss-cache/
-.tailwindcss-cache.json
+
+
 
 # PostgreSQL
 *.dump
