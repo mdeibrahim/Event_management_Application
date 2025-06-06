@@ -28,12 +28,8 @@ db.sqlite3
 db.sqlite3-journal
 
 # Django
-staticfiles/
-static/*
-!static/.gitkeep
-media/*
-!media/.gitkeep
-!media/images/.gitkeep
+
+
 celerybeat-schedule
 celerybeat.pid
 migrations/*
@@ -125,11 +121,7 @@ cover/
 *.env
 
 # Tailwind
-theme/static/css/dist/
-theme/static/css/src/
-theme/static/css/tailwind.config.js
-tailwind.config.js
-postcss.config.js
+
 *.css.map
 *.js.map
 
