@@ -2,13 +2,13 @@
   "name": "theme",
   "version": "4.0.1",
   "scripts": {
-    "build:css": "npx tailwindcss -i ./theme/static_src/src/styles.css -o ./theme/static/css/dist/styles.css",
-    "watch:css": "npx tailwindcss -i ./theme/static_src/src/styles.css -o ./theme/static/css/dist/styles.css --watch",
+    "build:css": "tailwindcss -i ./static_src/src/styles.css -o ./static/css/dist/styles.css",
+    "watch:css": "tailwindcss -i ./static_src/src/styles.css -o ./static/css/dist/styles.css --watch",
     "start": "npm run watch:css",
     "build": "npm run build:css",
-    "build:clean": "rimraf ./theme/static/css/dist",
-    "build:tailwind": "cross-env NODE_ENV=production postcss ./theme/static_src/src/styles.css -o ./theme/static/css/dist/styles.css --minify",
-    "dev": "cross-env NODE_ENV=development postcss ./theme/static_src/src/styles.css -o ./theme/static/css/dist/styles.css --watch"
+    "build:clean": "rimraf ./static/css/dist",
+    "build:tailwind": "cross-env NODE_ENV=production postcss ./static_src/src/styles.css -o ./static/css/dist/styles.css --minify",
+    "dev": "cross-env NODE_ENV=development postcss ./static_src/src/styles.css -o ./static/css/dist/styles.css --watch"
   },
   "keywords": [],
   "author": "",
