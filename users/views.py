@@ -4,20 +4,35 @@ from tasks.models import Event, EventCategory,Profile,User, EventRegistration, N
 from django.contrib import messages
 from django.utils import timezone
 from datetime import datetime, time
-from django.db.models import Q
+from django.db.models import Q, Case, When, Value, CharField, Prefetch
 from .forms import InviteUserForm
 from django.http import JsonResponse
 import logging
-from django.urls import reverse
+from django.urls import reverse, reverse_lazy
 from users.forms import EventForm,EventUpdateForm
 from uuid import UUID
 from django.core.paginator import Paginator, PageNotAnInteger, EmptyPage
 from django.contrib.auth.models import Group
 from django.contrib.auth.models import Permission
 from django.contrib.contenttypes.models import ContentType
+from django.contrib.auth import get_user_model
+from django.db.models import Count
+from django.contrib.auth.mixins import LoginRequiredMixin
+from django.views.generic import TemplateView
+import json
+from django.contrib.auth.views import PasswordResetView
+from django.contrib.auth.forms import SetPasswordForm
+from django.core.mail import send_mail
+from django.template.loader import render_to_string
+from django.utils.http import urlsafe_base64_encode
+from django.utils.encoding import force_bytes
+from django.contrib.auth.tokens import default_token_generator
+from django.conf import settings
 
 
 logger = logging.getLogger(__name__)
+
+User = get_user_model()
 
 def is_event_running(event_date, event_time):
     """Helper function to check if an event is currently running"""
@@ -79,8 +94,10 @@ def admin_users(request):
         messages.error(request, 'You do not have permission to view this page.')
         return redirect('admin_dashboard')
     
-    # Get all users
-    users = User.objects.all()
+    # Base queryset with all necessary related data and optimized group prefetch
+    users = User.objects.select_related('profile').prefetch_related(
+        Prefetch('groups', queryset=Group.objects.only('name').order_by('id'))
+    )
     
     # Get filter parameters
     role_filter = request.GET.get('role')
@@ -90,18 +107,15 @@ def admin_users(request):
     
     # Apply filters
     if role_filter:
-        if role_filter == 'admin':
+        if role_filter == 'ADMIN':
             users = users.filter(is_superuser=True)
-        elif role_filter == 'manager':
+        elif role_filter == 'EVENT_MANAGER':
             users = users.filter(is_staff=True, is_superuser=False)
-        elif role_filter == 'general_user':
+        elif role_filter == 'GENERAL_USER':
             users = users.filter(is_staff=False, is_superuser=False)
     
     if status_filter:
-        if status_filter == 'active':
-            users = users.filter(is_active=True)
-        elif status_filter == 'inactive':
-            users = users.filter(is_active=False)
+        users = users.filter(is_active=(status_filter == 'active'))
     
     if search_query:
         users = users.filter(
@@ -111,26 +125,28 @@ def admin_users(request):
             Q(last_name__icontains=search_query)
         )
     
-    # Order users by date joined
+    # Order users
     users = users.order_by('-date_joined')
     
-    # Get role names for each user
-    for user in users:
+    # Pagination
+    paginator = Paginator(users, 10)
+    page = request.GET.get('page')
+    paginated_user = paginator.get_page(page)
+    
+    # Get role names for each user in the current page using prefetched groups
+    for user in paginated_user:
         if user.is_superuser:
             user.role_name = 'Admin'
         elif user.is_staff:
-            user.role_name = 'Manager'
+            user.role_name = 'Event Manager'
         else:
-            group = user.groups.first()
-            user.role_name = group.name if group else 'General User'
-    
-    # Pagination
-    paginator = Paginator(users, 10)  # Show 10 users per page
-    page = request.GET.get('page')
-    users = paginator.get_page(page)
+            # Use prefetched groups instead of making a new query
+            user.role_name = user.groups.first().name if user.groups.exists() else 'General User'
     
     context = {
-        'users': users,
+        'users': paginated_user,
+        'page_obj': paginated_user,
+        'total_users': paginator.count,
         'role_filter': role_filter,
         'status_filter': status_filter,
         'action': action,
@@ -389,8 +405,9 @@ def admin_profiles(request):
 #     return user.primary_role == 'ADMIN'
 
 @login_required
-def admin_edit(request, user_id):
-    if not request.user.is_superuser:
+def admin_edit_user(request, user_id):
+    # Check if user is admin or superuser
+    if not (request.user.is_superuser or request.user.is_staff):
         messages.error(request, 'You do not have permission to edit users.')
         return redirect('admin_dashboard')
     
@@ -412,9 +429,15 @@ def admin_edit(request, user_id):
         current_group = general_user_group
     
     if request.method == 'POST':
+        # Handle basic user information updates
+        user_to_edit.username = request.POST.get('username', user_to_edit.username)
+        user_to_edit.email = request.POST.get('email', user_to_edit.email)
+        user_to_edit.first_name = request.POST.get('first_name', user_to_edit.first_name)
+        user_to_edit.last_name = request.POST.get('last_name', user_to_edit.last_name)
+        
         # Handle role change
         new_group_id = request.POST.get('primary_role')
-        if new_group_id and request.user.is_superuser and not user_to_edit.is_superuser:
+        if new_group_id and (request.user.is_superuser or request.user.is_staff) and not user_to_edit.is_superuser:
             try:
                 new_group = Group.objects.get(id=new_group_id)
                 if new_group.name in ['Admin', 'Manager']:
@@ -431,7 +454,7 @@ def admin_edit(request, user_id):
             except Group.DoesNotExist:
                 messages.error(request, 'Invalid role selected.')
         
-        # Handle status fields
+        # Handle status fields - only superusers can modify these
         if request.user.is_superuser:
             is_active = request.POST.get('is_active') == 'on'
             is_staff = request.POST.get('is_staff') == 'on'
@@ -452,10 +475,26 @@ def admin_edit(request, user_id):
             user_to_edit.is_active = is_active
             user_to_edit.is_staff = is_staff
             user_to_edit.is_superuser = is_superuser
-            user_to_edit.save()
-            messages.success(request, 'User status updated successfully.')
         
-        return redirect('admin_edit', user_id=user_id)
+        # Handle date fields
+        try:
+            last_login = request.POST.get('last_login')
+            if last_login:
+                user_to_edit.last_login = datetime.strptime(last_login, '%Y-%m-%dT%H:%M:%S')
+            
+            date_joined = request.POST.get('date_joined')
+            if date_joined:
+                user_to_edit.date_joined = datetime.strptime(date_joined, '%Y-%m-%dT%H:%M:%S')
+        except ValueError:
+            messages.error(request, 'Invalid date format.')
+        
+        try:
+            user_to_edit.save()
+            messages.success(request, 'User information updated successfully.')
+        except Exception as e:
+            messages.error(request, f'Error updating user: {str(e)}')
+        
+        return redirect('admin_users')
     
     # Get all available groups
     available_groups = Group.objects.all()
@@ -479,239 +518,251 @@ def admin_edit(request, user_id):
         'role_name': role_name,
         'role_info': role_info,
         'is_superuser': request.user.is_superuser,
+        'is_staff': request.user.is_staff,
     }
     
     return render(request, 'admin/admin_edit_user.html', context)
 
-@login_required
-def admin_edit_user(request):
-    if not request.user.primary_role == 'ADMIN':
-        messages.error(request, 'You do not have permission to access this page.')
-        return redirect('user_home')
+
+# @login_required
+# def user_home(request):
+#========================== 2. convert FBV to CBV===================================
+class UserHomeView(LoginRequiredMixin,TemplateView):
+    template_name= 'user_home.html'
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
         
-    if request.method == 'POST':
-        user = request.user
-        user.username = request.POST.get('username')
-        user.email = request.POST.get('email')
-        user.first_name = request.POST.get('first_name')
-        user.last_name = request.POST.get('last_name')
-        user.primary_role = request.POST.get('primary_role')
         
-        # Handle boolean fields
-        user.is_active = request.POST.get('is_active') == 'on'
-        user.is_staff = request.POST.get('is_staff') == 'on'
-        user.is_superuser = request.POST.get('is_superuser') == 'on'
+    
+        user_type="General"
+        if self.request.user.is_superuser:
+            user_type="Super_user"
+
+        # Get events for the current user
+        # system_events = Event.objects.all
+        user_events = Event.objects.filter(creator=self.request.user)
         
-        # Handle date fields
-        try:
-            last_login = request.POST.get('last_login')
-            if last_login:
-                user.last_login = timezone.make_aware(datetime.strptime(last_login, '%Y-%m-%dT%H:%M:%S'))
-            
-            date_joined = request.POST.get('date_joined')
-            if date_joined:
-                user.date_joined = timezone.make_aware(datetime.strptime(date_joined, '%Y-%m-%dT%H:%M:%S'))
-        except ValueError as e:
-            messages.error(request, f'Invalid date format: {str(e)}')
-            return redirect('admin_edit_user')
+        # Get public events
+        public_events = Event.objects.filter(visibility='PUBLIC')
+        public_events_count = public_events.count()
         
-        try:
-            user.save()
-            messages.success(request, 'User information updated successfully!')
-        except Exception as e:
-            messages.error(request, f'Error updating user information: {str(e)}')
-        
-        return redirect('admin_edit_user')
-    
-    return render(request, 'admin/admin_edit_user.html', {'user': request.user})
+        # Get user's notifications
+        notifications = Notification.objects.filter(
+            recipient=self.request.user
+        ).order_by('-timestamp')[:10]  # Get last 10 notifications
 
-@login_required
-def user_home(request):
-    user_type="General"
-    if request.user.is_superuser:
-        user_type="Super_user"
+        # My attended events
+        my_activities = Event.objects.filter(
+            registrations__user=self.request.user,
+            registrations__role__in=['VOLUNTEER', 'PARTICIPANT'],
+            registrations__status='APPROVED'
+        ).distinct()
 
-    # Get events for the current user
-    system_events = Event.objects.all()
-    user_events = Event.objects.filter(creator=request.user)
-    
-    # Get public events
-    public_events = Event.objects.filter(visibility='PUBLIC')
-    public_events_count = public_events.count()
-    
-    # Get user's notifications
-    notifications = Notification.objects.filter(
-        recipient=request.user
-    ).order_by('-timestamp')[:10]  # Get last 10 notifications
-
-    # My attended events
-    my_activities = Event.objects.filter(
-        registrations__user=request.user,
-        registrations__role__in=['VOLUNTEER', 'PARTICIPANT'],
-        registrations__status='APPROVED'
-    ).distinct()
-
-    # Get role information for each activity
-    activities_with_roles = []
-    for activity in my_activities:
-        registration = EventRegistration.objects.filter(
-            event=activity,
-            user=request.user,
-            status='APPROVED'
-        ).first()
-        activities_with_roles.append({
-            'event': activity,
-            'role': registration.role if registration else None
-        })
-    
-    context = {
-        'user_type':user_type,
-        'my_activities': activities_with_roles,
-        'user_events': user_events,
-        'system_events': system_events,
-        'public_events': public_events,
-        'public_events_count': public_events_count,
-        'notifications': notifications,
-    }
-    return render(request, 'user_home.html', context)
-
-@login_required
-def manager_dashboard(request):
-    # Get all events
-    events = Event.objects.all()
-    
-    # Get events for the current user
-    user_events = Event.objects.filter(Q(creator=request.user) | Q(managers=request.user))
-    user_total_events = user_events
-    
-    # Get upcoming events (events with dates in the future)
-    user_upcoming_events = user_events.filter(date__gte=timezone.now().date())
-    system_upcoming_events = Event.objects.filter(date__gte=timezone.now().date())
-    
-    # Get past events (events with dates in the past)
-    user_past_events = user_events.filter(date__lt=timezone.now().date())
-    system_past_events = Event.objects.filter(date__lt=timezone.now().date())
-
-    system_today_events = Event.objects.filter(date=timezone.now().date())
-    user_today_events = user_events.filter(date=timezone.now().date())
-
-    events_type, event_list_title = get_filtered_events(user_events, request)
-    
-    context = {
-        'event': events,  # For total count
-        'user_total_events_count': user_total_events.count(),
-        'system_total_events_count': events.count(),
-        'system_total_users_count': system_upcoming_events.count(),
-        'user_upcoming_events_count': user_upcoming_events.count(),
-        'system_upcoming_events_count': system_upcoming_events.count(),
-        'user_past_events_count': user_past_events.count(),
-        'system_past_events_count': system_past_events.count(),
-        'events_list': user_events,  # For the event list
-        'event_list_title': event_list_title,
-        'user_events_type': events_type
-    }
-    
-    return render(request, 'manager_dashboard.html', context)
-
-@login_required
-def user_activity(request):
-    # Get all events
-    events = Event.objects.all()
-    
-    # Get events where user is a manager
-    as_a_manager = Event.objects.filter(managers=request.user)
-    
-    # Get events where user is a volunteer through EventRegistration
-    as_a_volunteer = Event.objects.filter(
-        registrations__user=request.user,
-        registrations__role='VOLUNTEER',
-        registrations__status='APPROVED'
-    )
-    
-    # Get events where user is a participant through EventRegistration
-    as_a_participant = Event.objects.filter(
-        registrations__user=request.user,
-        registrations__role='PARTICIPANT',
-        registrations__status='APPROVED'
-    )
-
-    # Get the activity type from request
-    activity_type = request.GET.get('type', 'all')
-    activity_title = "Today's Activities"  # Default title
-
-    # Filter events based on activity type
-    if activity_type == 'manager':
-        filtered_events = as_a_manager
-        activity_title = "Manager Activities"
-    elif activity_type == 'volunteer':
-        filtered_events = as_a_volunteer
-        activity_title = "Volunteer Activities"
-    elif activity_type == 'participant':
-        filtered_events = as_a_participant
-        activity_title = "Participant Activities"
-    elif activity_type == 'upcoming':
-        # Combine and filter for upcoming events
-        filtered_events = Event.objects.filter(
-            Q(id__in=as_a_manager.values_list('id', flat=True)) |
-            Q(id__in=as_a_volunteer.values_list('id', flat=True)) |
-            Q(id__in=as_a_participant.values_list('id', flat=True)),
-            date__gte=timezone.now().date()
-        )
-        activity_title = "Upcoming Activities"
-    elif activity_type == 'past':
-        # Combine and filter for past events
-        filtered_events = Event.objects.filter(
-            Q(id__in=as_a_manager.values_list('id', flat=True)) |
-            Q(id__in=as_a_volunteer.values_list('id', flat=True)) |
-            Q(id__in=as_a_participant.values_list('id', flat=True)),
-            date__lt=timezone.now().date()
-        )
-        activity_title = "Past Activities"
-    else:
-        # Combine and filter for today's events
-        filtered_events = Event.objects.filter(
-            Q(id__in=as_a_manager.values_list('id', flat=True)) |
-            Q(id__in=as_a_volunteer.values_list('id', flat=True)) |
-            Q(id__in=as_a_participant.values_list('id', flat=True)),
-            date=timezone.now().date()
-        )
-        activity_title = "Today's Activities"
-
-    # Get registration information for each event
-    events_with_roles = []
-    for event in filtered_events:
-        role = None
-        if event in as_a_manager:
-            role = 'MANAGER'
-        else:
+        # Get role information for each activity
+        activities_with_roles = []
+        for activity in my_activities:
             registration = EventRegistration.objects.filter(
-                event=event,
-                user=request.user,
+                event=activity,
+                user=self.request.user,
                 status='APPROVED'
             ).first()
-            if registration:
-                role = registration.role
-        events_with_roles.append({
-            'event': event,
-            'role': role
-        })
+            activities_with_roles.append({
+                'event': activity,
+                'role': registration.role if registration else None
+            })
+        
+        context = {
+            'user_type':user_type,
+            'my_activities': activities_with_roles,
+            'user_events': user_events,
+            # 'system_events': system_events,
+            'public_events': public_events,
+            'public_events_count': public_events_count,
+            'notifications': notifications,
+        }
+        return context
 
+@login_required
+def user_profile(request):
+    # Get the user's profile with related data
+    user = request.user
+    try:
+        profile = user.profile
+    except Profile.DoesNotExist:
+        profile = Profile.objects.create(user=user)
+    
+    # Get user's event registrations
+    registrations = EventRegistration.objects.filter(
+        user=user
+    ).select_related('event').order_by('-requested_at')
+    
+    # Get user's created events
+    created_events = Event.objects.filter(
+        creator=user
+    ).order_by('-date', '-time')
+    
+    # Get user's managed events
+    managed_events = Event.objects.filter(
+        managers=user
+    ).order_by('-date', '-time')
+    
     context = {
-        'events': filtered_events,
-        'events_with_roles': events_with_roles,
-        'activity_title': activity_title,
-        'activity_type': activity_type,
-        'filtered_events': filtered_events.count(),
-        'filtered_events_list': events_with_roles,
-        'as_a_manager': as_a_manager.count(),
-        'as_a_volunteer': as_a_volunteer.count(),
-        'as_a_participant': as_a_participant.count(),
-        'manager_count': as_a_manager,
-        'volunteer_count': as_a_volunteer,
-        'participant_count': as_a_participant,
+        'user': user,
+        'profile': profile,
+        'registrations': registrations,
+        'created_events': created_events,
+        'managed_events': managed_events,
     }
+    return render(request, 'user_profile.html', context)
 
-    return render(request, 'user_activity.html', context)
+# @login_required
+# def manager_dashboard(request):
+#========================== 1. convert FBV to CBV===================================
+class ManagerDashboardView(LoginRequiredMixin, TemplateView):
+    template_name = 'manager_dashboard.html'
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+    # Get all events
+        events = Event.objects.all()
+        
+        # Get events for the current user
+        user_events = Event.objects.filter(Q(creator=self.request.user) | Q(managers=self.request.user))
+        user_total_events = user_events
+        
+        # Get upcoming events (events with dates in the future)
+        user_upcoming_events = user_events.filter(date__gte=timezone.now().date())
+        # system_upcoming_events = Event.objects.filter(date__gte=timezone.now().date())
+        
+        # Get past events (events with dates in the past)
+        user_past_events = user_events.filter(date__lt=timezone.now().date())
+        # system_past_events = Event.objects.filter(date__lt=timezone.now().date())
+
+        # system_today_events = Event.objects.filter(date=timezone.now().date())
+        # user_today_events = user_events.filter(date=timezone.now().date())
+
+        events_type, event_list_title = get_filtered_events(user_events, self.request)
+        
+        context = {
+            'event': events,  # For total count
+            'user_total_events_count': user_total_events.count(),
+            # 'system_total_events_count': events.count(),
+            # 'system_total_users_count': system_upcoming_events.count(),
+            'user_upcoming_events_count': user_upcoming_events.count(),
+            # 'system_upcoming_events_count': system_upcoming_events.count(),
+            'user_past_events_count': user_past_events.count(),
+            # 'system_past_events_count': system_past_events.count(),
+            'events_list': user_events,  # For the event list
+            'event_list_title': event_list_title,
+            'user_events_type': events_type
+        }
+        
+        return context
+
+# @login_required
+# def user_activity(request):
+    # Get all events
+    # events = Event.objects.all()
+#========================== 3. convert FBV to CBV===================================
+class UserActivityView(LoginRequiredMixin,TemplateView):
+    template_name = 'user_activity.html'
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+    
+        # Get events where user is a manager
+        as_a_manager = Event.objects.filter(managers=self.request.user)
+        
+        # Get events where user is a volunteer through EventRegistration
+        as_a_volunteer = Event.objects.filter(
+            registrations__user=self.request.user,
+            registrations__role='VOLUNTEER',
+            registrations__status='APPROVED'
+        )
+        
+        # Get events where user is a participant through EventRegistration
+        as_a_participant = Event.objects.filter(
+            registrations__user=self.request.user,
+            registrations__role='PARTICIPANT',
+            registrations__status='APPROVED'
+        )
+
+        # Get the activity type from self.request
+        activity_type = self.request.GET.get('type', 'all')
+        activity_title = "Today's Activities"  # Default title
+
+        # Filter events based on activity type
+        if activity_type == 'manager':
+            filtered_events = as_a_manager
+            activity_title = "Manager Activities"
+        elif activity_type == 'volunteer':
+            filtered_events = as_a_volunteer
+            activity_title = "Volunteer Activities"
+        elif activity_type == 'participant':
+            filtered_events = as_a_participant
+            activity_title = "Participant Activities"
+        elif activity_type == 'upcoming':
+            # Combine and filter for upcoming events
+            filtered_events = Event.objects.filter(
+                Q(id__in=as_a_manager.values_list('id', flat=True)) |
+                Q(id__in=as_a_volunteer.values_list('id', flat=True)) |
+                Q(id__in=as_a_participant.values_list('id', flat=True)),
+                date__gte=timezone.now().date()
+            )
+            activity_title = "Upcoming Activities"
+        elif activity_type == 'past':
+            # Combine and filter for past events
+            filtered_events = Event.objects.filter(
+                Q(id__in=as_a_manager.values_list('id', flat=True)) |
+                Q(id__in=as_a_volunteer.values_list('id', flat=True)) |
+                Q(id__in=as_a_participant.values_list('id', flat=True)),
+                date__lt=timezone.now().date()
+            )
+            activity_title = "Past Activities"
+        else:
+            # Combine and filter for today's events
+            filtered_events = Event.objects.filter(
+                Q(id__in=as_a_manager.values_list('id', flat=True)) |
+                Q(id__in=as_a_volunteer.values_list('id', flat=True)) |
+                Q(id__in=as_a_participant.values_list('id', flat=True)),
+                date=timezone.now().date()
+            )
+            activity_title = "Today's Activities"
+
+        # Get registration information for each event
+        events_with_roles = []
+        for event in filtered_events:
+            role = None
+            if event in as_a_manager:
+                role = 'MANAGER'
+            else:
+                registration = EventRegistration.objects.filter(
+                    event=event,
+                    user=self.request.user,
+                    status='APPROVED'
+                ).first()
+                if registration:
+                    role = registration.role
+            events_with_roles.append({
+                'event': event,
+                'role': role
+            })
+
+        context = {
+            'events': filtered_events,
+            'events_with_roles': events_with_roles,
+            'activity_title': activity_title,
+            'activity_type': activity_type,
+            'filtered_events': filtered_events.count(),
+            'filtered_events_list': events_with_roles,
+            'as_a_manager': as_a_manager.count(),
+            'as_a_volunteer': as_a_volunteer.count(),
+            'as_a_participant': as_a_participant.count(),
+            # 'manager_count': as_a_manager,
+            # 'volunteer_count': as_a_volunteer,
+            # 'participant_count': as_a_participant,
+        }
+
+        return context
 
 @login_required
 def add_an_event(request):
@@ -818,146 +869,168 @@ def invite_user(request, event_id):
                 
     return redirect('manage_spacific_event', event_id=event_id)
 
-@login_required
-def manage_spacific_event(request, event_id):
-    try:
-        event = Event.objects.get(event_id=event_id)
+# @login_required
+# def manage_spacific_event(request, event_id):
+#========================== 4. convert FBV to CBV===================================
+class ManageSpacificEventView(LoginRequiredMixin, TemplateView):
+    template_name = 'manage_spacific_event.html'
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        event_id = self.kwargs.get('event_id')
         
-        # Get events for the current user
-        user_events = Event.objects.filter(creator=request.user)
-        
-        # Use the helper function to get filtered events
-        events_type, event_list_title = get_filtered_events(user_events, request)
+        try:
+            event = Event.objects.get(event_id=event_id)
+            
+            # Get events for the current user
+            user_events = Event.objects.filter(creator=self.request.user)
+            
+            # Use the helper function to get filtered events
+            events_type, event_list_title = get_filtered_events(user_events, self.request)
 
-        # Get current server time
-        current_time = timezone.now()
-        today = current_time.date()
+            # Get current server time
+            current_time = timezone.now()
+            today = current_time.date()
 
-        # Get pending requests for this event
-        pending_requests = EventRegistration.objects.filter(
-            event=event,
-            status='PENDING_APPROVAL'
-        ).select_related('user')
+            # Get pending requests for this event
+            pending_requests = EventRegistration.objects.filter(
+                event=event,
+                status='PENDING_APPROVAL'
+            ).select_related('user')
 
-        # Get notifications for this event
-        notifications_list = Notification.objects.filter(
-            event=event
-        ).order_by('-timestamp')
+            # Get notifications for this event
+            notifications_list = Notification.objects.filter(
+                event=event
+            ).order_by('-timestamp')
 
-        # Get event attendees (both participants and volunteers)
-        volunteers = EventRegistration.objects.filter(
-            event=event,
-            role='VOLUNTEER',
-            status='APPROVED'
-        ).select_related('user')
-        
-        participants = EventRegistration.objects.filter(
-            event=event,
-            role='PARTICIPANT',
-            status='APPROVED'
-        ).select_related('user')
+            # Get event attendees (both participants and volunteers)
+            volunteers = EventRegistration.objects.filter(
+                event=event,
+                role='VOLUNTEER',
+                status='APPROVED'
+            ).select_related('user')
+            
+            participants = EventRegistration.objects.filter(
+                event=event,
+                role='PARTICIPANT',
+                status='APPROVED'
+            ).select_related('user')
 
-        # Get user's registration for this event
-        user_registration = EventRegistration.objects.filter(
-            event=event,
-            user=request.user,
-            status='APPROVED'
-        ).first()
+            # Get user's registration for this event
+            user_registration = EventRegistration.objects.filter(
+                event=event,
+                user=self.request.user,
+                status='APPROVED'
+            ).first()
 
-        # Check if user is an approved volunteer for this event
-        is_volunteer = EventRegistration.objects.filter(
-            event=event,
-            user=request.user,
-            role='VOLUNTEER',
-            status='APPROVED'
-        ).exists()
+            # Check if user is an approved volunteer for this event
+            is_volunteer = EventRegistration.objects.filter(
+                event=event,
+                user=self.request.user,
+                role='VOLUNTEER',
+                status='APPROVED'
+            ).exists()
 
-        # Handle user search with improved query
-        searched_users = None
-        if request.GET.get('user_search_query'):
-            search_query = request.GET.get('user_search_query').strip()
-            if len(search_query) >= 2:  # Only search if query is at least 2 characters
-                # Split the search query into words for better matching
-                search_terms = search_query.split()
-                
-                # Start with a base queryset excluding the current user
-                base_query = User.objects.filter(is_superuser=False).exclude(id=request.user.id)
-                
-                # Build the query dynamically based on search terms
-                query = Q()
-                for term in search_terms:
-                    term_query = (
-                        Q(username__icontains=term) |
-                        Q(email__icontains=term) |
-                        Q(first_name__icontains=term) |
-                        Q(last_name__icontains=term)
-                    )
-                    query &= term_query
-                
-                # Apply the search query
-                searched_users = base_query.filter(query).distinct()[:10]  # Limit to 10 results
-                
-                # Add a message if no results found
-                if not searched_users:
-                    messages.info(request, f'No users found matching "{search_query}"')
-            else:
-                messages.warning(request, 'Please enter at least 2 characters to search')
+            # Handle user search with improved query
+            searched_users = None
+            if self.request.GET.get('user_search_query'):
+                search_query = self.request.GET.get('user_search_query').strip()
+                if len(search_query) >= 2:  # Only search if query is at least 2 characters
+                    # Split the search query into words for better matching
+                    search_terms = search_query.split()
+                    
+                    # Start with a base queryset excluding the current user
+                    base_query = User.objects.filter(is_superuser=False).exclude(id=self.request.user.id)
+                    
+                    # Build the query dynamically based on search terms
+                    query = Q()
+                    for term in search_terms:
+                        term_query = (
+                            Q(username__icontains=term) |
+                            Q(email__icontains=term) |
+                            Q(first_name__icontains=term) |
+                            Q(last_name__icontains=term)
+                        )
+                        query &= term_query
+                    
+                    # Apply the search query
+                    searched_users = base_query.filter(query).distinct()[:10]  # Limit to 10 results
+                    
+                    # Add a message if no results found
+                    if not searched_users:
+                        messages.info(self.request, f'No users found matching "{search_query}"')
+                else:
+                    messages.warning(self.request, 'Please enter at least 2 characters to search')
 
-        # Create invitation form
-        invite_form = InviteUserForm()
+            # Create invitation form
+            invite_form = InviteUserForm()
 
-        context = {
-            'event': event,
-            'events_type': events_type,
-            'event_list_title': event_list_title,
-            'current_time': current_time,
-            'today': today,
-            'is_running': is_event_running(event.date, event.time),
-            'pending_requests': pending_requests,
-            'notifications_list': notifications_list,
-            'volunteers': volunteers,
-            'participants': participants,
-            'searched_users': searched_users,
-            'invite_form': invite_form,
-            'user_registration': user_registration,
-            'is_volunteer': is_volunteer,
-        }
-        return render(request, 'manage_spacific_event.html', context)
-    except Event.DoesNotExist:
-        messages.error(request, 'Event not found.')
-        return redirect('manager_dashboard')
+            context = {
+                'event': event,
+                'events_type': events_type,
+                'event_list_title': event_list_title,
+                'current_time': current_time,
+                'today': today,
+                'is_running': is_event_running(event.date, event.time),
+                'pending_requests': pending_requests,
+                'notifications_list': notifications_list,
+                'volunteers': volunteers,
+                'participants': participants,
+                'searched_users': searched_users,
+                'invite_form': invite_form,
+                'user_registration': user_registration,
+                'is_volunteer': is_volunteer,
+            }
+            return context
+        except Event.DoesNotExist:
+            messages.error(self.request, 'Event not found.')
+            return redirect('manager_dashboard')
     
 
-@login_required
-def manager_update_event(request, event_id):
-    try:
-        event = Event.objects.get(event_id=event_id)
-        if request.user != event.creator and request.user not in event.managers.all():
-            messages.error(request, "You don't have permission to update this event.")
+# @login_required
+# def manager_update_event(request, event_id):
+#========================== 5. convert FBV to CBV===================================
+class ManagerUpdateEventView(LoginRequiredMixin, TemplateView):
+    template_name = 'update_event.html'
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        event_id = self.kwargs.get('event_id')
+        
+        try:
+            event = Event.objects.get(event_id=event_id)
+            if self.request.user != event.creator and self.request.user not in event.managers.all():
+                messages.error(self.request, "You don't have permission to update this event.")
+                return redirect('manager_dashboard')
+                
+            form = EventUpdateForm(instance=event)
+            context.update({
+                'event': event,
+                'form': form,
+                'uuid': event_id
+            })
+            return context
+            
+        except Event.DoesNotExist:
+            messages.error(self.request, "Event not found.")
             return redirect('manager_dashboard')
-    except Event.DoesNotExist:
-        messages.error(request, "Event not found.")
-        return redirect('manager_dashboard')
-
-    if request.method == 'POST':
-        form = EventUpdateForm(request.POST, request.FILES, instance=event)
-        if form.is_valid():
-            form.save()
-            messages.success(request, 'Event updated successfully!')
-
-            return redirect('manage_spacific_event', event_id=event_id)
-        # Add detailed error logging
-        for field, errors in form.errors.items():
-            for error in errors:
-                messages.error(request, f"{field}: {error}")
-    else:
-        form = EventUpdateForm(instance=event)
-
-    return render(request, 'update_event.html', {
-        'event': event,
-        'form': form,
-        'uuid': event_id
-    })
+    
+    def post(self, request, *args, **kwargs):
+        event_id = self.kwargs.get('event_id')
+        try:
+            event = Event.objects.get(event_id=event_id)
+            form = EventUpdateForm(request.POST, request.FILES, instance=event)
+            if form.is_valid():
+                form.save()
+                messages.success(request, 'Event updated successfully!')
+                return redirect('manage_spacific_event', event_id=event_id)
+            for field, errors in form.errors.items():
+                for error in errors:
+                    messages.error(request, f"{field}: {error}")
+            return self.get(request, *args, **kwargs)
+        except Event.DoesNotExist:
+            messages.error(request, "Event not found.")
+            return redirect('manager_dashboard')
 
 @login_required
 def manager_delete_event(request, event_id):
@@ -1148,6 +1221,13 @@ def accept_invitation(request, event_id):
                 status='INVITED'
             )
             
+            # Clear previous notifications for this event and user
+            Notification.objects.filter(
+                event=event,
+                recipient=request.user,
+                notification_type__in=['INVITED', 'INVITE_ACCEPTED', 'INVITE_DECLINED']
+            ).delete()
+            
             registration.status = 'APPROVED'
             registration.processed_at = timezone.now()
             registration.save()
@@ -1159,6 +1239,15 @@ def accept_invitation(request, event_id):
                 event=event,
                 notification_type='INVITE_ACCEPTED',
                 message=f'{request.user.get_full_name() or request.user.username} has accepted your invitation to join {event.title} as a {registration.get_role_display()}.'
+            )
+            
+            # Create notification for the user who accepted
+            Notification.objects.create(
+                recipient=request.user,
+                sender=event.creator,
+                event=event,
+                notification_type='INVITE_ACCEPTED',
+                message=f'You have successfully joined {event.title} as a {registration.get_role_display()}.'
             )
             
             messages.success(request, f'You have successfully joined {event.title} as a {registration.get_role_display()}.')
@@ -1181,6 +1270,13 @@ def decline_invitation(request, event_id):
                 status='INVITED'
             )
             
+            # Clear previous notifications for this event and user
+            Notification.objects.filter(
+                event=event,
+                recipient=request.user,
+                notification_type__in=['INVITED', 'INVITE_ACCEPTED', 'INVITE_DECLINED']
+            ).delete()
+            
             registration.status = 'REJECTED'
             registration.processed_at = timezone.now()
             registration.save()
@@ -1194,6 +1290,15 @@ def decline_invitation(request, event_id):
                 message=f'{request.user.get_full_name() or request.user.username} has declined your invitation to join {event.title} as a {registration.get_role_display()}.'
             )
             
+            # Create notification for the user who declined
+            Notification.objects.create(
+                recipient=request.user,
+                sender=event.creator,
+                event=event,
+                notification_type='INVITE_DECLINED',
+                message=f'You have declined the invitation to join {event.title} as a {registration.get_role_display()}.'
+            )
+            
             messages.success(request, f'You have declined the invitation to join {event.title}.')
             
         except (Event.DoesNotExist, EventRegistration.DoesNotExist):
@@ -1202,6 +1307,125 @@ def decline_invitation(request, event_id):
             messages.error(request, 'An error occurred while processing your request.')
             
     return redirect('user_home')
+
+
+
+
+
+def test_email(request):
+    if not request.user.is_superuser:
+        messages.error(request, 'Only superusers can test email configuration.')
+        return redirect('admin_dashboard')
+    
+    try:
+        send_mail(
+            subject='Test Email from EventPro',
+            message='This is a test email to verify your email configuration is working correctly.',
+            from_email=settings.DEFAULT_FROM_EMAIL,
+            recipient_list=[request.user.email],
+            fail_silently=False,
+        )
+        messages.success(request, 'Test email sent successfully! Please check your inbox.')
+    except Exception as e:
+        messages.error(request, f'Failed to send test email: {str(e)}')
+    
+    return redirect('admin_dashboard')
+
+
+
+class AdminPasswordResetView(LoginRequiredMixin, TemplateView):
+    template_name = 'admin/admin_edit_user.html'
+    
+    def dispatch(self, request, *args, **kwargs):
+        if not (request.user.is_superuser or request.user.is_staff):
+            messages.error(request, 'You do not have permission to reset passwords.')
+            return redirect('admin_dashboard')
+        return super().dispatch(request, *args, **kwargs)
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        user_id = self.kwargs.get('user_id')
+        user = get_object_or_404(User, id=user_id)
+        context['user'] = user
+        return context
+    
+    def post(self, request, *args, **kwargs):
+        user_id = self.kwargs.get('user_id')
+        user = get_object_or_404(User, id=user_id)
+        
+        new_password1 = request.POST.get('new_password1')
+        new_password2 = request.POST.get('new_password2')
+        
+        if not new_password1 or not new_password2:
+            messages.error(request, 'Both password fields are required.')
+            return redirect('admin_user_edit', user_id=user_id)
+        
+        if new_password1 != new_password2:
+            messages.error(request, 'Passwords do not match.')
+            return redirect('admin_user_edit', user_id=user_id)
+        
+        # Temporarily deactivate the user
+        user.is_active = False
+        user.save()
+        
+        # Generate password reset token
+        token = default_token_generator.make_token(user)
+        uid = urlsafe_base64_encode(force_bytes(user.user_id))
+        
+        # Prepare email context
+        context = {
+            'user': user,
+            'new_password': new_password1,
+            'protocol': 'https' if request.is_secure() else 'http',
+            'domain': request.get_host(),
+            'uid': uid,
+            'token': token,
+            'site_name': settings.SITE_NAME,
+        }
+        
+        try:
+            # Render email content
+            email_content = render_to_string('admin/email/password_reset_email.html', context)
+            
+            # Log email attempt
+            logger.info(f"Attempting to send password reset email to {user.email}")
+            
+            # Send email
+            send_mail(
+                subject='Your Password Has Been Reset',
+                message=email_content,
+                from_email=settings.DEFAULT_FROM_EMAIL,
+                recipient_list=[user.email],
+                fail_silently=False,
+                html_message=email_content,
+            )
+            
+            logger.info(f"Successfully sent password reset email to {user.email}")
+            
+            # Set the new password
+            user.set_password(new_password1)
+            user.save()
+            
+            messages.success(request, 'Password has been reset and activation email has been sent to the user.')
+            
+            # Create notification for the user
+            Notification.objects.create(
+                recipient=user,
+                sender=request.user,
+                notification_type='PASSWORD_RESET',
+                message=f'Your password has been reset by {request.user.get_full_name() or request.user.username}. Please check your email for activation instructions.'
+            )
+            
+        except Exception as e:
+            # Log the error
+            logger.error(f"Error sending password reset email to {user.email}: {str(e)}")
+            
+            # If email fails, reactivate the user and show error
+            user.is_active = True
+            user.save()
+            messages.error(request, f'Error sending email: {str(e)}. Please check your email configuration.')
+        
+        return redirect('admin_user_edit', user_id=user_id)
 
 
 

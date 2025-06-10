@@ -26,6 +26,7 @@ urlpatterns = [
     # path('tasks/', include('tasks.urls')),
     path('users/', include('users.urls')),
     path('verify-email/<str:token>/', views.verify_email, name='verify_email'),
+    path('__debug__/', include('debug_toolbar.urls')),
     path("__reload__/", include("django_browser_reload.urls")),  # Re-enabled for auto-reloading
 ] 
 

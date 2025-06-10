@@ -1,9 +1,7 @@
 {% extends "admin/admin_dashboard_base.html" %}
 {% load static %}
 
-{% block admin_title %}Admin>users{% endblock %}
-
-
+{% block title %} Admin>users {% endblock %}
 
 {% block admin_content %}
 <div class="container pl-10 py-4">
@@ -124,7 +122,7 @@
                         </td>
                         <td class="px-3 py-2 whitespace-nowrap text-sm">
                             <div class="flex gap-2">
-                                <a href="{% url 'admin_edit' user.id %}" 
+                                <a href="{% url 'admin_user_edit' user.id %}" 
                                    class="inline-flex items-center px-2.5 py-1.5 border border-transparent text-xs font-medium rounded text-blue-700 bg-blue-100 hover:bg-blue-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors duration-200">
                                     <i class="fa fa-edit mr-1"></i>
                                     Edit
