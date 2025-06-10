@@ -32,13 +32,8 @@ INSTALLED_APPS = [
     'users',
     'tailwind',
     'theme',  # Re-added for Tailwind app
-    'debug_toolbar',
     'django_browser_reload',  # Re-enabled for auto-reloading
 ]
-
-# Add debug toolbar only in development
-if DEBUG:
-    INSTALLED_APPS += ['debug_toolbar']
 
 TAILWIND_APP_NAME = 'theme'
 TAILWIND_CSS_PATH = 'css/dist/styles.css'
@@ -51,7 +46,6 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
-    'debug_toolbar.middleware.DebugToolbarMiddleware',
     'django_browser_reload.middleware.BrowserReloadMiddleware',  # Re-enabled for auto-reloading
 ]
 
@@ -180,8 +174,3 @@ EMAIL_HOST_USER = config('EMAIL_HOST_USER')
 EMAIL_HOST_PASSWORD = config('EMAIL_HOST_PASSWORD')
 DEFAULT_FROM_EMAIL = config('DEFAULT_FROM_EMAIL', default=config('EMAIL_HOST_USER'))
 SITE_NAME = 'EventPro'
-
-# Debug Toolbar settings
-DEBUG_TOOLBAR_CONFIG = {
-    'SHOW_TOOLBAR_CALLBACK': lambda request: DEBUG,  # Only show toolbar when DEBUG is True
-}
