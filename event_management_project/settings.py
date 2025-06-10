@@ -36,6 +36,10 @@ INSTALLED_APPS = [
     'django_browser_reload',  # Re-enabled for auto-reloading
 ]
 
+# Add debug toolbar only in development
+if DEBUG:
+    INSTALLED_APPS += ['debug_toolbar']
+
 TAILWIND_APP_NAME = 'theme'
 TAILWIND_CSS_PATH = 'css/dist/styles.css'
 
