@@ -8,27 +8,29 @@
 {% block admin_content %}
 <div class="pl-8">
     <div class="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        <a href="{% url 'admin_dashboard' %}?type=total_events">
+        <a href="{% url 'admin_events' %}">
             <div class="bg-white p-6 rounded-xl shadow-lg flex items-center space-x-4">
                 <div class="p-3 rounded-full bg-emerald-100 text-emerald-600">
                     <i class="fas fa-calendar-check fa-2x"></i>
                 </div>
                 <div>
                     <p class="text-sm text-gray-500">Total Events</p>
-                    <p class="text-2xl font-semibold text-emerald-800">{{total_events}}</p> {# Replace with dynamic data #}
+                    <p class="text-2xl font-semibold text-emerald-800">{{total_events}}</p> 
                 </div>
             </div>
         </a>
     
-        <div class="bg-white p-6 rounded-xl shadow-lg flex items-center space-x-4">
-            <div class="p-3 rounded-full bg-sky-100 text-sky-600">
-                <i class="fas fa-users fa-2x"></i>
+        <a href="{% url "admin_users" %}">
+            <div class="bg-white p-6 rounded-xl shadow-lg flex items-center space-x-4">
+                <div class="p-3 rounded-full bg-sky-100 text-sky-600">
+                    <i class="fas fa-users fa-2x"></i>
+                </div>
+                <div>
+                    <p class="text-sm text-gray-500">Total Users</p>
+                    <p class="text-2xl font-semibold text-sky-800">{{total_users}}</p> 
+                </div>
             </div>
-            <div>
-                <p class="text-sm text-gray-500">Total Users</p>
-                <p class="text-2xl font-semibold text-sky-800">{{total_users}}</p> {# Replace with dynamic data #}
-            </div>
-        </div>
+        </a>
     
         <div class="bg-white p-6 rounded-xl shadow-lg flex items-center space-x-4">
             <div class="p-3 rounded-full bg-amber-100 text-amber-600">
@@ -36,7 +38,7 @@
             </div>
             <div>
                 <p class="text-sm text-gray-500">Pending Approvals</p>
-                <p class="text-sm font-semibold text-amber-800">Not implemented</p> {# Replace with dynamic data #}
+                <p class="text-sm font-semibold text-amber-800">Not implemented</p> 
             </div>
         </div>
     
@@ -46,7 +48,7 @@
             </div>
             <div>
                 <p class="text-sm text-gray-500">Total Revenue</p>
-                <p class="text-2xl font-semibold text-rose-800">${{total_revenue}}</p> {# Replace with dynamic data #}
+                <p class="text-2xl font-semibold text-rose-800">${{total_revenue}}</p> 
             </div>
         </div>
     </div>

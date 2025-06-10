@@ -32,6 +32,7 @@ INSTALLED_APPS = [
     'users',
     'tailwind',
     'theme',  # Re-added for Tailwind app
+    'debug_toolbar',
     'django_browser_reload',  # Re-enabled for auto-reloading
 ]
 
@@ -46,12 +47,15 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'debug_toolbar.middleware.DebugToolbarMiddleware',
     'django_browser_reload.middleware.BrowserReloadMiddleware',  # Re-enabled for auto-reloading
 ]
 
 INTERNAL_IPS = [
     "127.0.0.1",
+    "localhost",
 ]
+
 
 ROOT_URLCONF = 'event_management_project.urls'
 
@@ -171,3 +175,9 @@ EMAIL_USE_TLS = config('EMAIL_USE_TLS', default=True, cast=bool)
 EMAIL_HOST_USER = config('EMAIL_HOST_USER')
 EMAIL_HOST_PASSWORD = config('EMAIL_HOST_PASSWORD')
 DEFAULT_FROM_EMAIL = config('DEFAULT_FROM_EMAIL', default=config('EMAIL_HOST_USER'))
+SITE_NAME = 'EventPro'
+
+# Debug Toolbar settings
+DEBUG_TOOLBAR_CONFIG = {
+    'SHOW_TOOLBAR_CALLBACK': lambda request: DEBUG,  # Only show toolbar when DEBUG is True
+}

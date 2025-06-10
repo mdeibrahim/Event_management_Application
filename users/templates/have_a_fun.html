@@ -29,9 +29,10 @@
             border-radius: 10px 10px 0 0;
             position: relative;
             transform-style: preserve-3d;
-            transition: transform 0.8s cubic-bezier(0.68, -0.55, 0.27, 1.55); /* More dynamic transition */
+            transition: transform 1.5s cubic-bezier(0.68, -0.55, 0.27, 1.55); /* Slower transition for 180 rotation */
             cursor: pointer;
             box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            transform-origin: right center; /* Set rotation point to right side */
         }
         .door:hover {
             transform: translateX(-2%) rotateY(-25deg) scale(1.03);
@@ -124,6 +125,24 @@
             transform: translateY(0px) scale(0.98);
         }
 
+        .door-message {
+            opacity: 0;
+            transition: opacity 1.5s ease-in-out;
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background-color: rgba(0, 0, 0, 0.8);
+            padding: 20px;
+            border-radius: 10px;
+            z-index: 1000;
+            pointer-events: none;
+        }
+
+        .door-message.visible {
+            opacity: 1;
+        }
+
     </style>
 </head>
 <body class="bg-slate-900 text-slate-200 flex flex-col items-center justify-center min-h-screen p-6">
@@ -139,11 +158,7 @@
         <p class="text-xl sm:text-2xl text-slate-300 mb-4 leading-relaxed">
             Ah, a curious traveler! You've stumbled upon a rather... <em class="text-pink-400 font-semibold">exclusive</em> gateway.
         </p>
-        <p class="text-md sm:text-lg text-slate-400 mb-8 leading-relaxed">
-            This particular portal, you see, only yields to those who whisper the <strong class="text-orange-400">secret incantation</strong> 
-            (or, between us, possess the correct digital credentials). What wonders, horrors, or unspeakable truths lie beyond? 
-            That remains a mystery... for now.
-        </p>
+        
 
         <div class="door-container my-10 flex justify-center">
             <div class="door" id="mysteriousDoor">
@@ -153,9 +168,11 @@
             </div>
         </div>
         
-        <p class="text-sm text-slate-500 mb-8 italic">
-            (Psst... the door seems sealed by ancient magic. Only the authorized may truly pass!)
-        </p>
+        <div class="door-message" id="doorMessage">
+            <p class="text-white text-lg font-semibold">
+                Psst... the door seems sealed by ancient magic. Only the authorized may truly pass!
+            </p>
+        </div>
 
         <div>
             <a href="{% url 'public_home' %}" 
@@ -169,6 +186,29 @@
         // Star generation
         const starsContainer = document.getElementById('stars-container');
         const numberOfStars = 120; // Increased star count
+        const doorMessage = document.getElementById('doorMessage');
+        let isDoorOpen = false;
+
+        // Function to show and hide the door message
+        function showDoorMessage() {
+            doorMessage.classList.add('visible');
+            setTimeout(() => {
+                doorMessage.classList.remove('visible');
+            }, 3000);
+        }
+
+        // Function to reset door position
+        function resetDoor() {
+            setTimeout(() => {
+                door.classList.remove('clicked');
+                if (!door.matches(':hover')) {
+                    door.style.transform = 'translateX(0) rotateY(0) scale(1)';
+                } else {
+                    door.style.transform = 'translateX(-2%) rotateY(-25deg) scale(1.03)';
+                }
+                isDoorOpen = false;
+            }, 1500); // Match the door rotation duration
+        }
 
         for (let i = 0; i < numberOfStars; i++) {
             const star = document.createElement('div');
@@ -210,46 +250,33 @@
 
         if (door) {
             door.addEventListener('click', async () => {
-                if (typeof Tone === 'undefined') {
-                    console.warn("Tone.js is not loaded. Sound effects will not play.");
-                    // Fallback visual effect without sound
-                    door.classList.add('clicked');
-                    setTimeout(() => {
-                        door.classList.remove('clicked');
-                        // Return to hover state (or default if not hovering)
-                        if (!door.matches(':hover')) {
-                             door.style.transform = 'translateX(0) rotateY(0) scale(1)';
-                        } else {
-                            door.style.transform = 'translateX(-2%) rotateY(-25deg) scale(1.03)';
-                        }
-                    }, 800); // Match transition duration
-                    return;
-                }
+                if (!isDoorOpen) {
+                    // Show the door message
+                    showDoorMessage();
+                    isDoorOpen = true;
 
-                // Ensure audio context is running (important for some browsers)
-                if (Tone.context.state !== 'running') {
-                    await Tone.start();
-                }
-
-                // Play creak sound
-                if (creakSound) {
-                    creakSound.triggerAttackRelease("8n"); // "8n" is a short duration
-                }
-                
-                // Visual effect
-                door.classList.add('clicked');
-                
-                setTimeout(() => {
-                    door.classList.remove('clicked');
-                    // Return to hover state (or default if not hovering)
-                    // Check if the mouse is still over the door to return to hover state
-                    if (!door.matches(':hover')) {
-                         door.style.transform = 'translateX(0) rotateY(0) scale(1)';
-                    } else {
-                         // Re-apply hover transform if still hovering
-                         door.style.transform = 'translateX(-2%) rotateY(-25deg) scale(1.03)';
+                    if (typeof Tone === 'undefined') {
+                        console.warn("Tone.js is not loaded. Sound effects will not play.");
+                        // Fallback visual effect without sound
+                        door.classList.add('clicked');
+                        resetDoor();
+                        return;
                     }
-                }, 800); // Match the transition duration in CSS
+
+                    // Ensure audio context is running (important for some browsers)
+                    if (Tone.context.state !== 'running') {
+                        await Tone.start();
+                    }
+
+                    // Play creak sound
+                    if (creakSound) {
+                        creakSound.triggerAttackRelease("8n"); // "8n" is a short duration
+                    }
+                    
+                    // Visual effect
+                    door.classList.add('clicked');
+                    resetDoor();
+                }
             });
         }
     </script>
