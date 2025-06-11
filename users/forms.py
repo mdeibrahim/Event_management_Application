@@ -179,11 +179,10 @@ class ProfileUpdateForm(forms.ModelForm):
             if ( (len(phone_number)>0 and len(phone_number)<11) or len(phone_number)>11 ):
                 raise forms.ValidationError('Phone number must be 11 digits')
             
-            # # Format the phone number (optional)
-            # if len(phone_number) == 11 and phone_number.startswith('0'):
-            #     phone_number = '+88' + phone_number
-            # elif len(phone_number) == 10:
-            #     phone_number = '+880' + phone_number
+            
+            # Format the phone number (optional)
+            if not phone_number.startswith(('013','015','016','017','018','019')):
+                raise forms.ValidationError('Phone number is not valid')
             
             return phone_number
         return phone_number
