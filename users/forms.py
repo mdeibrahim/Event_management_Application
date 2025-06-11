@@ -1,5 +1,5 @@
 from django import forms
-from tasks.models import EventRegistration, Event, EventCategory
+from tasks.models import EventRegistration, Event, EventCategory, Profile
 from django.utils import timezone
 
 class InviteUserForm(forms.Form):
@@ -150,3 +150,28 @@ class EventUpdateForm(forms.ModelForm):
         if commit:
             instance.save()
         return instance
+
+class ProfileUpdateForm(forms.ModelForm):
+    first_name = forms.CharField(max_length=30, required=False)
+    last_name = forms.CharField(max_length=30, required=False)
+    
+    class Meta:
+        model = Profile
+        fields = ['phone_number', 'age', 'gender', 'profile_picture']
+        widgets = {
+            'phone_number': forms.TextInput(),
+            'age': forms.NumberInput(),
+            'gender': forms.Select(),
+            'profile_picture': forms.FileInput(),
+        }
+
+    def save(self, commit=True):
+        profile = super().save(commit=False)
+        if commit:
+            # Update user's first and last name
+            user = profile.user
+            user.first_name = self.cleaned_data.get('first_name', '')
+            user.last_name = self.cleaned_data.get('last_name', '')
+            user.save()
+            profile.save()
+        return profile

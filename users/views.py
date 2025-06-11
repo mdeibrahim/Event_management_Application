@@ -4,24 +4,18 @@ from tasks.models import Event, EventCategory,Profile,User, EventRegistration, N
 from django.contrib import messages
 from django.utils import timezone
 from datetime import datetime, time
-from django.db.models import Q, Case, When, Value, CharField, Prefetch
-from .forms import InviteUserForm
+from django.db.models import Q,Prefetch
+from .forms import InviteUserForm, ProfileUpdateForm
 from django.http import JsonResponse
 import logging
 from django.urls import reverse, reverse_lazy
-from users.forms import EventForm,EventUpdateForm
-from uuid import UUID
-from django.core.paginator import Paginator, PageNotAnInteger, EmptyPage
-from django.contrib.auth.models import Group
-from django.contrib.auth.models import Permission
-from django.contrib.contenttypes.models import ContentType
+from users.forms import EventUpdateForm
+from django.core.paginator import Paginator
+from django.contrib.auth.models import Group,Permission
 from django.contrib.auth import get_user_model
-from django.db.models import Count
 from django.contrib.auth.mixins import LoginRequiredMixin
-from django.views.generic import TemplateView
-import json
-from django.contrib.auth.views import PasswordResetView
-from django.contrib.auth.forms import SetPasswordForm
+from django.views.generic import TemplateView, UpdateView
+from django.contrib.auth.views import PasswordResetView, PasswordChangeView as BasePasswordChangeView
 from django.core.mail import send_mail
 from django.template.loader import render_to_string
 from django.utils.http import urlsafe_base64_encode
@@ -1333,7 +1327,7 @@ def test_email(request):
 
 
 
-class AdminPasswordResetView(LoginRequiredMixin, TemplateView):
+class AdminUserPasswordResetView(LoginRequiredMixin, TemplateView):
     template_name = 'admin/admin_edit_user.html'
     
     def dispatch(self, request, *args, **kwargs):
@@ -1427,8 +1421,40 @@ class AdminPasswordResetView(LoginRequiredMixin, TemplateView):
         
         return redirect('admin_user_edit', user_id=user_id)
 
+class CustomPasswordChangeView(BasePasswordChangeView):
+    template_name = 'user_profile.html'
+    success_url = reverse_lazy('user_profile')
+
+    def form_valid(self, form):
+        response = super().form_valid(form)
+        messages.success(self.request, 'Your password has been successfully changed!')
+        return response
+
+class UpdateProfileView(LoginRequiredMixin, UpdateView):
+    template_name = 'user_profile.html'
+    success_url = reverse_lazy('user_profile')
+    form_class = ProfileUpdateForm
+    
+    def get_object(self, queryset=None):
+        return self.request.user.profile
+    
+    def get_initial(self):
+        initial = super().get_initial()
+        initial['first_name'] = self.request.user.first_name
+        initial['last_name'] = self.request.user.last_name
+        return initial
+    
+    def form_valid(self, form):
+        messages.success(self.request, 'Your profile has been successfully updated!')
+        return super().form_valid(form)
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['user'] = self.request.user
+        return context
 
 
 
 
 
+    
