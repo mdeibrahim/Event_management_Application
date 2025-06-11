@@ -1434,16 +1434,16 @@ class UpdateProfileView(LoginRequiredMixin, UpdateView):
     template_name = 'user_profile.html'
     success_url = reverse_lazy('user_profile')
     form_class = ProfileUpdateForm
-    
+
     def get_object(self, queryset=None):
         return self.request.user.profile
-    
+
     def get_initial(self):
         initial = super().get_initial()
         initial['first_name'] = self.request.user.first_name
         initial['last_name'] = self.request.user.last_name
         return initial
-    
+
     def form_valid(self, form):
         messages.success(self.request, 'Your profile has been successfully updated!')
         return super().form_valid(form)

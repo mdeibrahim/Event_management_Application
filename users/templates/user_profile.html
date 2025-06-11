@@ -14,9 +14,9 @@
                         src="{{ user.profile.profile_picture.url }}"
                         alt="{{ user.get_full_name|default:user.username }}'s profile picture">
                 {% else %}
-                    <div class="mx-auto h-24 w-24 rounded-full bg-emerald-100 border-4 border-emerald-500 flex items-center justify-center">
-                        <span class="text-3xl font-bold text-emerald-700">{{ user.username|first|upper }}</span>
-                    </div>
+                    <img class="mx-auto h-20 w-20 rounded-full object-cover border-4 border-emerald-500" 
+                        src="{{ MEDIA_URL }}defaults/default_profile.png"
+                        alt="{{ user.get_full_name|default:user.username }}'s profile picture">
                 {% endif %}
             </div>
             <div class="text-center pl-4">
@@ -55,6 +55,20 @@
             <div id="content-details" class="tab-content m-6">
                 <form action="{% url 'update_profile' %}" method="POST" enctype="multipart/form-data" class="space-y-8">
                     {% csrf_token %}
+                    {% if form.errors %}
+                        <div class="rounded-md bg-red-50 p-4 mb-4">
+                            <div class="flex">
+                                <div class="ml-3">
+                                    <h3 class="text-sm font-medium text-red-800">
+                                        Please correct the following errors:
+                                    </h3>
+                                    <div class="mt-2 text-sm text-red-700">
+                                        {{ form.errors }}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    {% endif %}
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div >
                             <label for="first_name" class="block text-sm font-medium text-gray-900">First Name</label>
@@ -73,7 +87,7 @@
                         <div>
                             <label for="phone_number" class="block text-sm font-medium text-gray-900">Phone Number</label>
                             <div class="mt-1 relative rounded-md shadow-sm"> 
-                                <input type="tel" name="phone_number" id="phone_number" value="{{ user.profile.phone_number|default:'' }}" class="w-full rounded-md border border-emerald-600 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500">
+                                <input type="tel" name="phone_number" id="phone_number" placeholder="0177*******" value="{{ user.profile.phone_number|default:'' }}" class="w-full rounded-md border border-emerald-600 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500">
                             </div>
                         </div>
                         <div> 

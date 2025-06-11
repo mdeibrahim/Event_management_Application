@@ -154,16 +154,39 @@ class EventUpdateForm(forms.ModelForm):
 class ProfileUpdateForm(forms.ModelForm):
     first_name = forms.CharField(max_length=30, required=False)
     last_name = forms.CharField(max_length=30, required=False)
+    phone_number = forms.CharField(
+        max_length=20,
+        required=False,
+        widget=forms.TextInput()
+    )
     
     class Meta:
         model = Profile
         fields = ['phone_number', 'age', 'gender', 'profile_picture']
         widgets = {
-            'phone_number': forms.TextInput(),
             'age': forms.NumberInput(),
             'gender': forms.Select(),
             'profile_picture': forms.FileInput(),
         }
+
+    def clean_phone_number(self):
+        phone_number = self.cleaned_data.get('phone_number')
+        if phone_number:
+            # Remove any non-digit characters
+            phone_number = ''.join(filter(str.isdigit, phone_number))
+            
+            # Check if the phone number is valid (between 10 and 15 digits)
+            if ( (len(phone_number)>0 and len(phone_number)<11) or len(phone_number)>11 ):
+                raise forms.ValidationError('Phone number must be 11 digits')
+            
+            # # Format the phone number (optional)
+            # if len(phone_number) == 11 and phone_number.startswith('0'):
+            #     phone_number = '+88' + phone_number
+            # elif len(phone_number) == 10:
+            #     phone_number = '+880' + phone_number
+            
+            return phone_number
+        return phone_number
 
     def save(self, commit=True):
         profile = super().save(commit=False)
