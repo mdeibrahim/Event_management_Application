@@ -34,10 +34,15 @@
                     <div class="flex items-center">
                         {% if user.is_authenticated %}
                             <div class="relative inline-block ml-3 group">
-                                <img id="profileDropdownButton" 
-                                     src="https://placehold.co/40x40/059669/FFFFFF?text={{ user.username|first|upper|default:'E' }}" 
-                                     alt="User Profile" 
-                                     class="w-10 h-10 rounded-full cursor-pointer object-cover">
+                                {% if user.profile.profile_picture %}
+                            <img class="mx-auto h-12 w-12 rounded-full object-cover cursor-pointer border-4 border-emerald-500" 
+                                src="{{ user.profile.profile_picture.url }}"
+                                alt="{{ user.get_full_name|default:user.username }}'s profile picture">
+                                {% else %}
+                                    <img class="mx-auto h-12 w-12 rounded-full object-cover cursor-pointer border-4 border-emerald-500" 
+                                        src="{{ MEDIA_URL }}defaults/default_profile.png"
+                                        alt="{{ user.get_full_name|default:user.username }}'s profile picture">
+                                {% endif %}
                                 
                                 <div id="profileDropdownMenu" 
                                      class="hidden group-hover:block absolute right-0 mt-2 py-1 bg-white min-w-[160px] shadow-lg z-50 rounded-md ring-1 ring-black ring-opacity-5">

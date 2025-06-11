@@ -5,9 +5,6 @@ import os
 import uuid
 from django.contrib.auth import get_user_model
 
-# Custom User Model (if you decide to extend the default User significantly later)
-# For now, we can use Django's built-in User and a separate Profile model.
-# If you use AbstractUser, ensure you set AUTH_USER_MODEL = 'your_app.User' in settings.py
 
 User = get_user_model()
 
@@ -16,6 +13,9 @@ def user_profile_image_path(instance, filename):
     ext = filename.split('.')[-1]
     filename = f"profile_{instance.user.id}.{ext}"
     return os.path.join('profiles', str(instance.user.id), filename)
+
+def get_default_profile_picture():
+    return 'defaults/default_profile.png'
 
 class Profile(models.Model):
     user = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='profile')
@@ -28,7 +28,12 @@ class Profile(models.Model):
         ('PREFER_NOT_TO_SAY', 'Prefer not to say'),
     ]
     gender = models.CharField(max_length=20, choices=GENDER_CHOICES, blank=True, null=True)
-    profile_picture = models.ImageField(upload_to=user_profile_image_path, blank=True, null=True)
+    profile_picture = models.ImageField(
+        upload_to=user_profile_image_path,
+        default=get_default_profile_picture,
+        blank=True,
+        null=True
+    )
     email_verification_token = models.CharField(max_length=100, null=True, blank=True)
 
     def __str__(self):
@@ -86,9 +91,9 @@ class Event(models.Model):
     visibility = models.CharField(max_length=10, choices=VISIBILITY_CHOICES, default='PUBLIC')
     secret_code = models.CharField(max_length=50, blank=True, null=True, unique=True) # For private events
     
-    event_cover = models.ImageField(upload_to='images/', blank=True, null=True) # Or use ImageField
+    event_cover = models.ImageField(upload_to='images/', blank=True, null=True) 
     max_attendees = models.PositiveIntegerField(blank=True, null=True) # Optional
-    tags = models.CharField(max_length=255, blank=True, null=True) # e.g., "tech,python,django"
+    tags = models.CharField(max_length=255, blank=True, null=True) 
 
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
@@ -100,7 +105,6 @@ class Event(models.Model):
         is_new = self._state.adding
         super().save(*args, **kwargs)
         if is_new and self.creator:
-            # Automatically add the creator to the managers list
             self.managers.add(self.creator)
 
 class EventRegistration(models.Model):
@@ -126,7 +130,7 @@ class EventRegistration(models.Model):
     invited_at = models.DateTimeField(null=True, blank=True) # Timestamp when user is invited (for this specific role)
     processed_at = models.DateTimeField(null=True, blank=True) # Timestamp when status changes (approved, rejected etc.)
     
-    # attended = models.BooleanField(default=False) # For tracking actual attendance
+   
 
     class Meta:
         unique_together = ('user', 'event', 'role')
