@@ -14,7 +14,7 @@
                         src="{{ user.profile.profile_picture.url }}"
                         alt="{{ user.get_full_name|default:user.username }}'s profile picture">
                 {% else %}
-                    <img src="{% static 'images/default_profile.png' %}" alt="Event Planning Tips"class="mx-auto h-20 w-20 rounded-full object-cover border-4 border-emerald-500">
+                    <img src="{% static 'images/default_profile.png' %}" alt="{{ user.get_full_name|default:user.username }}'s profile picture" class="mx-auto h-20 w-20 rounded-full object-cover border-4 border-emerald-500 opacity-100">
                     {% comment %} <img class="mx-auto h-20 w-20 rounded-full object-cover border-4 border-emerald-500" 
                         src="{{ MEDIA_URL }}images/default_profile.png"
                         alt="{{ user.get_full_name|default:user.username }}'s profile picture"> {% endcomment %}
