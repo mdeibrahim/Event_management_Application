@@ -19,13 +19,8 @@ urlpatterns = [
     # path('admin/user/edit/<int:user_id>/', views.admin_edit_user, name='admin_user_edit'),
     path('admin/edit-user/<int:user_id>/', views.admin_edit_user, name='admin_user_edit'),
 
-    path('admin/password-reset/<int:user_id>/', views.AdminPasswordResetView.as_view(), name='admin_password_reset'),
-    path('password-reset-confirm/<uidb64>/<token>/', 
-         auth_views.PasswordResetConfirmView.as_view(
-             template_name='admin/password_reset_confirm.html',
-             success_url=reverse_lazy('login')
-         ),
-         name='password_reset_confirm'),
+    path('admin/password-reset/<int:user_id>/', views.AdminUserPasswordResetView.as_view(), name='admin_password_reset'),
+    path('password-reset-confirm/<uidb64>/<token>/',auth_views.PasswordResetConfirmView.as_view(template_name='admin/password_reset_confirm.html',success_url=reverse_lazy('login')),name='password_reset_confirm'),
     # path('admin/reset-password/<int:user_id>/', views.admin_reset_password, name='admin_reset_password'),
    
     # 2. convert FBV to CBV path('user_home/',views.user_home,name='user_home'),
@@ -49,5 +44,14 @@ urlpatterns = [
     path('user_profile/',views.user_profile,name='user_profile'),
     path('have_a_fun',views.have_a_fun,name='have_a_fun'),
     path('admin/test-email/', views.test_email, name='test_email'),
+    
+    path('update-profile',views.UpdateProfileView.as_view(),name='update_profile'),
+    path('password-change/', views.CustomPasswordChangeView.as_view(), name='password_change'),
+    
+    path('password-reset/',auth_views.PasswordResetView.as_view(),name='password_reset'),
+    path('password-reset/done/',auth_views.PasswordResetDoneView.as_view(),name='password_reset_done'),
+    path('reset/<uidb64>/<token>/',auth_views.PasswordResetConfirmView.as_view(),name='password_reset_confirm'),
+    path('reset/done/',auth_views.PasswordResetCompleteView.as_view(),name='password_reset_complete'),
+
 ]+ static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
 

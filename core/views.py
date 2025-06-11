@@ -107,9 +107,6 @@ def sign_in(request):
             
             if authenticated_user is not None:
                 login(request, authenticated_user)
-                # Check superuser status after successful login
-                # if authenticated_user.is_superuser:
-                #     return redirect('admin_home')
                 messages.success(request, f'Welcome back, {authenticated_user.username}!')
                 return redirect('user_home')
             else:
