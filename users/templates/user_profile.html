@@ -9,15 +9,14 @@
         <!-- Profile Header -->
         <div class="bg-white rounded-lg shadow-lg overflow-hidden mb-6 p-6 flex justify-center ">
             <div class="">
-                {% if user.profile.profile_picture %}
+                {% if user.profile.profile_picture and user.profile.profile_picture.url and 'defaults/default_profile.png' not in user.profile.profile_picture.url %}
                     <img class="mx-auto h-20 w-20 rounded-full object-cover border-4 border-emerald-500" 
                         src="{{ user.profile.profile_picture.url }}"
-                        alt="{{ user.get_full_name|default:user.username }}'s profile picture">
+                        alt="{{ user.username }}">
                 {% else %}
-                    <img src="{% static 'images/default_profile.png' %}" alt="{{ user.get_full_name|default:user.username }}'s profile picture" class="mx-auto h-20 w-20 rounded-full object-cover border-4 border-emerald-500 opacity-100">
-                    {% comment %} <img class="mx-auto h-20 w-20 rounded-full object-cover border-4 border-emerald-500" 
-                        src="{{ MEDIA_URL }}images/default_profile.png"
-                        alt="{{ user.get_full_name|default:user.username }}'s profile picture"> {% endcomment %}
+                    <img src="{% static 'images/default_profile.png' %}" 
+                        alt="{{ user.username }}'s profile picture" 
+                        class="mx-auto h-20 w-20 rounded-full object-cover border-4 border-emerald-500">
                 {% endif %}
             </div>
             <div class="text-center pl-4">

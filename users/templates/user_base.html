@@ -34,15 +34,17 @@
                     <div class="flex items-center">
                         {% if user.is_authenticated %}
                             <div class="relative inline-block ml-3 group">
-                                {% if user.profile.profile_picture %}
-                            <img class="mx-auto h-12 w-12 rounded-full object-cover cursor-pointer border-4 border-emerald-500" 
-                                src="{{ user.profile.profile_picture.url }}"
-                                alt="{{ user.get_full_name|default:user.username }}'s profile picture">
-                                {% else %}
-                                    <img class="mx-auto h-12 w-12 rounded-full object-cover cursor-pointer border-4 border-emerald-500" 
-                                        src="{% static 'images/default_profile.png' %}"
-                                        alt="{{ user.get_full_name|default:user.username }}'s profile picture">
-                                {% endif %}
+                                <div class="">
+                                    {% if user.profile.profile_picture and user.profile.profile_picture.url and 'defaults/default_profile.png' not in user.profile.profile_picture.url %}
+                                        <img class="mx-auto h-12 w-12 rounded-full object-cover cursor-pointer border-4 border-emerald-500" 
+                                            src="{{ user.profile.profile_picture.url }}"
+                                            alt="{{ user.username }}">
+                                    {% else %}
+                                        <img src="{% static 'images/default_profile.png' %}" 
+                                            alt="{{ user.username }}'s profile picture" 
+                                            class="mx-auto h-12 w-12 rounded-full object-cover cursor-pointer border-4 border-emerald-500">
+                                    {% endif %}
+                                </div>
                                 
                                 <div id="profileDropdownMenu" 
                                      class="hidden group-hover:block absolute right-0 mt-2 py-1 bg-white min-w-[160px] shadow-lg z-50 rounded-md ring-1 ring-black ring-opacity-5">
