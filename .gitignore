@@ -32,8 +32,8 @@ db.sqlite3-journal
 
 celerybeat-schedule
 celerybeat.pid
-migrations/*
-!migrations/__init__.py
+
+
 
 # Virtual Environment
 venv/
@@ -107,6 +107,9 @@ cover/
 *.postgres
 *.bak
 *.tmp
+
+# Keep populate_db.py
+!populate_db.py
 
 # Environment variables
 .env
