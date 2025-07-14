@@ -109,8 +109,7 @@ AUTH_USER_MODEL = 'core.User'
 
 DATABASES = {
     'default': dj_database_url.config(
-        # Replace this value with your local database's connection string.
-        default='postgresql://ems_db_ae3g_user:SuinTny0e4xPoZGxjMFGIQjmugOD0uWT@dpg-d10rfc15pdvs73aeq3pg-a.oregon-postgres.render.com/ems_db_ae3g',
+        default=config('DATABASE'),
         conn_max_age=600
     )
 }
