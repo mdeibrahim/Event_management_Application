@@ -1,7 +1,6 @@
 from pathlib import Path
 import dj_database_url
 from decouple import config
-import os
 
 
 
@@ -148,10 +147,9 @@ USE_TZ = True
 
 STATIC_URL = '/static/'
 STATICFILES_DIRS = [
-
     BASE_DIR / "static",
-    BASE_DIR / "theme" / "static",
-    BASE_DIR / "theme" / "static_src",
+    # BASE_DIR / "theme" / "static",  # This directory doesn't exist
+    # BASE_DIR / "theme" / "static_src",  # This is source files, not compiled static files
 ]
 STATIC_ROOT = BASE_DIR / 'staticfiles'
 # Media files
