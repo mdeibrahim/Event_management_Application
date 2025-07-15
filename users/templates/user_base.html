@@ -87,9 +87,27 @@
             </div>
             <div id="mobile-menu-main" class="md:hidden hidden">
                 <div class="px-2 pt-2 pb-3 space-y-1 sm:px-3">
-                    <a href="{% url 'user_home' %}" class="nav-link block px-3 py-2 rounded-md text-base font-medium {% if request.resolver_match.url_name == 'user_home' %}text-emerald-600 bg-emerald-50{% else %}text-gray-700 hover:text-emerald-600 hover:bg-emerald-50{% endif %}">Home</a>
-                    <a href="{% url 'manager_dashboard' %}" class="nav-link block px-3 py-2 rounded-md text-base font-medium {% if request.resolver_match.url_name == 'manager_dashboard' %}text-emerald-600 bg-emerald-50{% else %}text-gray-700 hover:text-emerald-600 hover:bg-emerald-50{% endif %}">Manager Dashboard</a>
-                    <a href="{% url 'user_activity' %}" class="nav-link block px-3 py-2 rounded-md text-base font-medium {% if request.resolver_match.url_name == 'user_activity' %}text-emerald-600 bg-emerald-50{% else %}text-gray-700 hover:text-emerald-600 hover:bg-emerald-50{% endif %}">My Activity</a>
+                    
+                    {% if user.is_authenticated %}
+                        <a href="{% url 'user_home' %}" class="nav-link block px-3 py-2 rounded-md text-base font-medium {% if request.resolver_match.url_name == 'user_home' %}text-emerald-600 bg-emerald-50{% else %}text-gray-700 hover:text-emerald-600 hover:bg-emerald-50{% endif %}">Home</a>
+                    {% endif %}
+    
+                    {% if user.is_authenticated %}
+                        <a href="{% url 'manager_dashboard' %}" class="nav-link block px-3 py-2 rounded-md text-base font-medium {% if request.resolver_match.url_name == 'manager_dashboard' %}text-emerald-600 bg-emerald-50{% else %}text-gray-700 hover:text-emerald-600 hover:bg-emerald-50{% endif %}">Manager Dashboard</a>
+                    {% endif %}
+                    {% if user.is_superuser %}
+                        <a href="{% url 'admin_dashboard' %}" class="nav-link block px-3 py-2 rounded-md text-base font-medium {% if request.resolver_match.url_name == 'admin_dashboard' %}text-emerald-600 bg-emerald-50{% else %}text-gray-700 hover:text-emerald-600 hover:bg-emerald-50{% endif %}">Admin Dashboard</a>
+                    {% endif %}
+                    {# Removed Blog and Contact for mobile as well #}
+                    {% if user.is_authenticated and not user.is_superuser %}
+                        <a href="{% url 'user_activity' %}" class="nav-link block px-3 py-2 rounded-md text-base font-medium {% if request.resolver_match.url_name == 'user_activity' %}text-emerald-600 bg-emerald-50{% else %}text-gray-700 hover:text-emerald-600 hover:bg-emerald-50{% endif %}">My Activity</a>
+                    {% endif %}
+                    {# If not authenticated, show login and signup #}
+                    {% if not user.is_authenticated %}
+                        <a href="{% url 'sign_in' %}" class="block w-full text-center px-4 py-2 mt-2 rounded-md text-base font-semibold text-white bg-emerald-600 hover:bg-emerald-700 shadow">Log In</a>
+                        <a href="{% url 'sign_up' %}" class="block w-full text-center px-4 py-2 mt-2 rounded-md text-base font-semibold text-emerald-600 border border-emerald-600 hover:bg-emerald-50 shadow">Sign Up</a>
+                    {% endif %}
+                    
                     {# Removed Blog and Contact for mobile as well #}
                     {% if not user.is_authenticated %}
                     <a href="{% url 'sign_in' %}" class="block w-full text-center px-4 py-2 mt-2 rounded-md text-base font-semibold text-white bg-emerald-600 hover:bg-emerald-700 shadow">Log In</a>
